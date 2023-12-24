@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"lib": ["ES2023"],
+		"target": "ES2022",
+		"useDefineForClassFields": true,
+
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
+
+		"outDir": "./build/",
+		"noEmit": true,
+
+		"verbatimModuleSyntax": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+
+		"strict": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictPropertyInitialization": true,
+		"noImplicitThis": true,
+		"useUnknownInCatchVariables": true,
+
+		"skipLibCheck": true
+	}
+}

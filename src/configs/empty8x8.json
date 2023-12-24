@@ -1,0 +1,18 @@
+{
+	"board": [
+		"XXXXXXXX",
+		"XXXXXXXX",
+		"XXXXXXXX",
+		"XXXXXXXX",
+		"XXXXXXXX",
+		"XXXXXXXX",
+		"XXXXXXXX",
+		"XXXXXXXX"
+	],
+	"key": {
+		"X": {"piece": {"id": ""}, "tile": {}}
+	},
+	"halfTurn": 0,
+	"maxHalfTurns": 60,
+	"plugins": []
+}

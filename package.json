@@ -1,0 +1,21 @@
+{
+	"name": "yggdrasil-engine",
+	"version": "1.0.0",
+	"description": "",
+	"main": "./src/main.ts",
+	"type": "module",
+	"scripts": {
+		"start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/main.ts"
+	},
+	"author": "",
+	"license": "MIT",
+	"devDependencies": {
+		"typescript": "^5.3.3"
+	},
+	"dependencies": {
+		"@types/node": "^20.10.5",
+		"@types/object-hash": "^3.0.6",
+		"object-hash": "^3.0.0",
+		"ts-node": "^10.9.2"
+	}
+}

@@ -1,18 +1,19 @@
 {
+	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"lib": ["ES2023"],
+		"lib": ["DOM"],
 		"target": "ES2022",
 		"useDefineForClassFields": true,
 
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
-		"allowImportingTsExtensions": true,
-		"resolveJsonModule": true,
-
-		"noEmit": true,
+		"module": "CommonJS",
+		"moduleResolution": "Classic",
+		"allowImportingTsExtensions": false,
+		"resolveJsonModule": false,
+		
+		"noEmit": false,
 
 		"verbatimModuleSyntax": true,
-		"esModuleInterop": true,
+		"esModuleInterop": false,
 		"forceConsistentCasingInFileNames": true,
 
 		"strict": true,
@@ -23,12 +24,8 @@
 		"noImplicitThis": true,
 		"useUnknownInCatchVariables": true,
 
-		"skipLibCheck": true,
+		"skipLibCheck": true
 	},
-	"include": [
-		"src/**/*"
-	],
-	"exclude": [
-		"src/frontend/**/*"
-	]
+	"include": ["./**/*"],
+	"exclude": []
 }

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<script src="./frontend.js"></script>
+		<link rel="stylesheet" href="./style.css"></script>
+		<title>YggdrasilEngine 🐲</title>
+	</head>
+	<body>
+		<div id="container">
+			<canvas id="canvas" width="800px"></canvas>
+			<div id="pieceDisplay" class="hidden">
+				<svg width="130%" height="56" style="position: absolute;">
+					<mask id="semicircle">
+						<rect fill="white" x="0" y="0" width="100%" height="100%"></rect>
+						<circle fill="black" cx="58" cy="56" r="39"></circle>
+					</mask>
+				</svg>
+				<div id="pieceBanner"></div>
+				<div id="pieceHeader">
+					<img id="pieceIcon" width="32px" height="32px" />
+					<div id="pieceNames">
+						<h2 id="pieceName"></h2>
+						<code id="pieceNamespace"></code>
+					</div>
+					<div id="pieceCoords">
+						<p id="pieceCartesianCoords"></p>
+						<code id="pieceHexCoords"></code>
+					</div>
+				</div>
+				<div id="pieceStats"></div>
+			</div>
+		</div>
+		<!-- Predownload Common Assets -->
+		<div style="display: none;">
+			<img src="assets/common/select.png">
+		</div>
+	</body>
+</html>

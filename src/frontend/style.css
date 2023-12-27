@@ -1,0 +1,103 @@
+body {
+	background-color: #313131;
+	color: white;
+	font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif
+}
+
+#container {
+	display: flex;
+	flex-direction: row;
+	overflow: hidden;
+}
+
+#canvas {
+	image-rendering: pixelated;
+	width: 60%;
+	min-width: 250px;
+	max-width: 800px;
+}
+
+#pieceDisplay.hidden {
+	opacity: 0;
+}
+
+#pieceDisplay {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: calc(40% - 7px);
+	max-width: 400px;
+	height: fit-content;
+	background-color: #1f1f1f;
+	border-radius: 5px;
+	margin-left: 7px;
+	opacity: 1;
+	transition: opacity .1s;
+}
+
+#pieceBanner {
+	position: absolute;
+	width: 100%;
+	height: 48px;
+	background-color: #0078D4;
+	border-radius: inherit;
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+	mask: url(#semicircle);
+}
+
+#pieceHeader {
+	display: flex;
+	flex-direction: row;
+}
+
+#pieceIcon {
+	image-rendering: pixelated;
+	width: 64px;
+	height: 64px;
+	margin: 24px 0px 0px 16px;
+}
+
+#pieceNames {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+#pieceName {
+	margin: auto 0px 0px 0px;
+}
+
+#pieceNamespace {
+	margin-top: -5px;
+	color: lightgray;
+}
+
+#pieceCoords {
+	display: flex;
+	flex-direction: column;
+	margin: auto 10px 0px 10px;
+	text-align: right;
+	color: lightgray;
+}
+
+#pieceStats {
+	height: 100%;
+	margin: 5px 10px 10px 10px;
+	padding: 5px;
+	background-color: #313131;
+	border-radius: 5px;
+}
+
+.boolean, .number {
+	color: #E5E510;
+}
+
+.string {
+	color: #0DBC79;
+}
+
+p {
+	margin-block-start: 0em;
+	margin-block-end: 0em;
+}

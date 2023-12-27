@@ -1,5 +1,4 @@
 import Hash from "object-hash";
-import type { ClassDeclaration, ClassElement, ClassExpression } from "typescript";
 
 // https://en.wikipedia.org/wiki/Fairy_chess_piece
 
@@ -65,7 +64,7 @@ class Tile {
 		}
 	}
 
-	clone(board: Board) {
+	clone(board?: Board) {
 		const copy = new Tile();
 		const props = Object.keys(this);
 		for (let i = 0; i < props.length; i++) {
@@ -106,6 +105,7 @@ class Board extends Array<Tile[]> {
 		return this.length;
 	}
 }
+Object.defineProperty(Board, "clone", {enumerable: false});
 Object.defineProperty(Board, "get", {enumerable: false});
 Object.defineProperty(Board, "width", {enumerable: false});
 Object.defineProperty(Board, "height", {enumerable: false});
@@ -153,7 +153,7 @@ class Piece {
 		this.hasMoved = options?.hasMoved || false;
 	}
 
-	clone(board: Board) {
+	clone(board?: Board) {
 		return new (this.constructor as (new (options?: PieceConstructorOptions) => this))({board: board, pos: this.pos, name: this.name, isWhite: this.isWhite, isRoyal: this.isRoyal, isIron: this.isIron, hasMoved: this.hasMoved});
 	}
 
@@ -351,17 +351,26 @@ enum Events {
  * Fantasy Chess Engine FTW
  */
 class YggdrasilEngine {
+
+	static INSTANCE = new YggdrasilEngine();
 	
-	static pieceRegistry = new Map<string, new (options: PieceConstructorOptions) => Piece>();
+	static pieceRegistry = new Map<string, new (options?: PieceConstructorOptions) => Piece>();
 	static namespaceRegistry = new Map<new (options: PieceConstructorOptions) => Piece, string>();
-	static eventBus = new Map<Events, (() => ((...Args: any[]) => void))[]>();
 
 	static Events = Events;
 
-	stateStack: {board: Board, moves: Move[], prevStateHash: string}[] = [];
+	static get eventBus() {
+		return YggdrasilEngine.INSTANCE.state.eventBus;
+	}
+
+	stateStack: {board: Board, moves: Move[], prevStateHash: string, eventBus: Map<Events, ((...Args: any[]) => void)[]>}[] = [];
 
 	get state() {
 		return this.stateStack[this.stateStack.length-1];
+	}
+
+	get eventBus() {
+		return this.state.eventBus;
 	}
 
 	get board() {
@@ -374,11 +383,11 @@ class YggdrasilEngine {
 	}
 
 	constructor() {
-		this.stateStack.push({board: new Board(), moves: [], prevStateHash: ""});
+		this.stateStack.push({board: new Board(), moves: [], prevStateHash: "", eventBus: new Map()});
 	}
 
 	static registerPiece(modId: string, registryName: string) {
-		return function decorator<This extends new (options: PieceConstructorOptions) => Piece>(target: This, context: ClassDecoratorContext<This>) {
+		return function decorator<This extends new (options?: PieceConstructorOptions) => Piece>(target: This, context: ClassDecoratorContext<This>) {
 			YggdrasilEngine.pieceRegistry.set(`${modId}:${registryName}`, target);
 			YggdrasilEngine.namespaceRegistry.set(target, `${modId}:${registryName}`);
 		}
@@ -388,18 +397,8 @@ class YggdrasilEngine {
 		return function decorator<This, Args>(target: (this: This, ...args: Args[]) => void, context: ClassMethodDecoratorContext<This, (this: This, ...args: Args[]) => void>) {
 			context.addInitializer(function (this: any) {
 				target = this[context.name].bind(this);
-				const weakRef = new WeakRef(this);
 				if (!YggdrasilEngine.eventBus.has(eventName)) YggdrasilEngine.eventBus.set(eventName, []);
-				const event = YggdrasilEngine.eventBus.get(eventName);
-				const handler = () => {
-					if (weakRef.deref()) return target;
-					return () => {
-						console.log(`Subscriber in Event ${eventName} has been dereferenced`);
-						const i = event?.indexOf(handler) ?? -1;
-						if (i > -1) event?.splice(i, 1);
-					}
-				}
-				event?.push(handler);
+				YggdrasilEngine.eventBus.get(eventName)?.push(target);
 			});
 		}
 	}
@@ -432,7 +431,8 @@ class YggdrasilEngine {
 	}
 
 	emitEvent<Args>(event: Events, ...args: Args[]) {
-		YggdrasilEngine.eventBus.get(event)?.forEach(reference => reference()(args));
+		console.log(`Emitting event: ${Object.values(Events)[event]}`);
+		this.eventBus.get(event)?.forEach(listener => listener(...args));
 	}
 
 	/**
@@ -449,6 +449,7 @@ class YggdrasilEngine {
 	 * Checks if the provided moves would result in an illegal board state
 	 */
 	isLegal(moves: Move[]) {
+		if (!moves.length) return true;
 		let halfTurn: Move[] = [];
 		let halfTurns = 0;
 		for (let i = 0; i < moves.length; i++) {
@@ -468,17 +469,23 @@ class YggdrasilEngine {
 	 * Makes move without checking legality and pushes to the state stack
 	 */
 	forceMove(moves: Move[]) {
-		this.stateStack.push({board: this.board.clone(), moves: [...this.state.moves], prevStateHash: this.hashState()});
+		if (moves.length === 0) return;
+		this.stateStack.push({board: new Board(), moves: [...this.state.moves], prevStateHash: this.hashState(), eventBus: new Map()});
+		this.state.board = this.stateStack[this.stateStack.length-2].board.clone(); // Clone the board after pushing to the stack, so that event handlers are registered properly.
+		console.log("Pushing state");
 
 		let halfTurn: Move[] = [];
 		for (let i = 0; i < moves.length; i++) {
 			const move = moves[i];
 			halfTurn.push(move);
-			let piece = move.piece;
+
+			let piece = this.board.get(move.piece?.pos || new Pos())?.piece;
 			if (!piece && move.pieceNamespace) {
-				const testPiece = this.board.get(move.fromPos || move.captureAtPos || move.dropAtPos || new Pos(NaN, NaN))?.piece;
+				const testPiece = this.board.get(move.fromPos || move.captureAtPos || move.dropAtPos || new Pos())?.piece;
 				if (testPiece && move.pieceNamespace === YggdrasilEngine.namespaceRegistry.get(testPiece.constructor as new (options: PieceConstructorOptions) => Piece)) piece = testPiece;
 			}
+			move.piece = piece;
+
 			if (move.removeAtPos) {
 				const tile = this.board.get(move.removeAtPos);
 				if (tile) tile.piece = undefined;
@@ -511,12 +518,13 @@ class YggdrasilEngine {
 					fromTile.piece = undefined;
 					toTile.piece = piece;
 					piece.pos = move.toPos;
+					piece.hasMoved = true;
 				}
 			}
 
 			if (move.canContinue && i < moves.length - 1) continue;
 			this.state.moves.push(...halfTurn);
-			if (move.canContinue) this.emitEvent(Events.HalfTurnEnd, halfTurn);
+			if (!move.canContinue) this.emitEvent(Events.HalfTurnEnd, halfTurn);
 			halfTurn = [];
 		}
 	}
@@ -525,6 +533,7 @@ class YggdrasilEngine {
 	 * Pops the state stack
 	 */
 	undoMove() {
+		console.log("Popping state");
 		this.stateStack.pop();
 	}
 
@@ -541,6 +550,7 @@ class YggdrasilEngine {
 
 	deserializeYCIN(ycin: string) {
 		const moves: Move[] = [];
+		if (!ycin) return moves;
 		const halfTurns = ycin.split("\r\n\r\n");
 
 		const namespaceRegex = /^([^ ]+) /;

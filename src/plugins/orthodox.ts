@@ -164,9 +164,9 @@ class King extends Piece {
 					continue;
 				}
 				const piece = tile.piece;
+				// TODO: check if pos is under attack and stop exploration
 				if (!piece) continue;
-				if (!(piece instanceof Rook)) { // TODO: use decoration to instead mark castleable pieces
-					// TODO: check if pos is under attack and stop exploration
+				if (!(piece instanceof Rook) || piece.hasMoved || piece.isWhite !== this.isWhite) { // TODO: use decoration to instead mark castleable pieces
 					x.splice(i, 1);
 					continue;
 				}

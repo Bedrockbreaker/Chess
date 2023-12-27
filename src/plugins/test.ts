@@ -13,8 +13,16 @@ import { YggdrasilEngine, Piece, type PieceConstructorOptions, Pos, Move } from 
  */
 @YggdrasilEngine.registerPiece("test", "test")
 class Test extends Piece {
+
+	static promotions: (new (options?: PieceConstructorOptions) => Piece)[] = [];
+	
 	constructor(options?: PieceConstructorOptions) {
 		super({name: "Test Piece", isIron: true, ...options});
+	}
+
+	@YggdrasilEngine.subscribeEvent(YggdrasilEngine.Events.loadEnd)
+	static onLoad() {
+		Test.promotions.push(...YggdrasilEngine.pieceRegistry.values());
 	}
 
 	getMoves(halfTurnMoves?: Move[]): Move[][] {
@@ -31,16 +39,6 @@ class Test extends Piece {
 		// Suicide
 		moves.push([new Move({piece: this, captureAtPos: this.pos})]);
 		return moves;
-	}
-
-	@YggdrasilEngine.subscribeEvent(YggdrasilEngine.Events.loadEnd)
-	static onLoad() {
-		console.log("Logging from static method in Test Piece saying the game has loaded!");
-	}
-
-	@YggdrasilEngine.subscribeEvent(YggdrasilEngine.Events.loadEnd)
-	onLoad() {
-		console.log("Logging from instance method in Test Piece saying the game has loaded!");
 	}
 }
 

@@ -8,13 +8,15 @@ import { YggdrasilEngine, Piece, type PieceConstructorOptions, Pos, Move } from 
  * - Can capture iron pieces
  * - Can make infinite number of moves
  * - Can drop piece from hand
- * - // TODO: Can promote to any piece (needs event subcription to onLoadFinish)
+ * - // TODO: Can promote to any piece
  * - Can suicide
  */
 @YggdrasilEngine.registerPiece("test", "test")
 class Test extends Piece {
 
 	static promotions: (new (options?: PieceConstructorOptions) => Piece)[] = [];
+
+	foo = "bar";
 	
 	constructor(options?: PieceConstructorOptions) {
 		super({name: "Test Piece", isIron: true, ...options});
@@ -32,9 +34,11 @@ class Test extends Piece {
 			// Board drop moves
 			if (!this.pos.isValid()) return [new Move({piece: this, dropAtPos: tile.pos, captureAtPos: tile.pos, canContinue: true})];
 			// End half turn if performing zero leap
-			if (Pos.equals(prevPos, tile.pos)) return [new Move({piece: this})];
+			if (Pos.equals(prevPos, tile.pos)) return [new Move({piece: this, fromPos: prevPos, toPos: tile.pos})];
 			// Universal Jump
-			return [new Move({piece: this, fromPos: prevPos, toPos: tile.pos, captureAtPos: tile.pos, canContinue: true})];
+			const jump = new Move({piece: this, fromPos: prevPos, toPos: tile.pos, captureAtPos: tile.pos, canContinue: true});
+			if (tile.piece) jump.captureAtPos = tile.pos;
+			return [jump];
 		});
 		// Suicide
 		moves.push([new Move({piece: this, captureAtPos: this.pos})]);

@@ -38,8 +38,8 @@ class Pawn extends Piece {
 		return {...super.JSONify(), enPassantTarget: this.enPassantTarget};
 	}
 
-	@atom(1, 1, 1, [Directions.Forward], true, (piece, _, allMoves) => piece.getPromotions(allMoves)) // Diagonal capture + promotions
-	@atom(1, 0, 2, [Directions.Forward], false, (piece, _, allMoves) => allMoves.slice(0, piece.hasMoved ? -1 : undefined)) // Single + Double push
+	@atom(1, 1, 1, [Directions.Forward], true, (piece, newMoves, oldMoves, allMoves) => piece.getPromotions(allMoves)) // Diagonal capture + promotions
+	@atom(1, 0, 2, [Directions.Forward], false, (piece, newMoves, oldMoves) => [...oldMoves, ...newMoves.slice(0, piece.hasMoved && newMoves.length > 1 ? 1 : undefined)]) // Single + Double push
 	getMoves(halfTurnMoves?: Move[]): Move[][] {
 		// En passant
 		const moves: Move[][] = [];
@@ -50,29 +50,39 @@ class Pawn extends Piece {
 		const pieceR = this.board.get(new Pos(this.x + (this.isWhite ? 1 : -1), this.y))?.piece;
 		if (
 			tileLF && (!tileLF?.piece || tileLF.piece.isCapturableBy(this))
-			&& pieceL instanceof Pawn && pieceL.isCapturableBy(this)
+			&& pieceL instanceof Pawn && pieceL.isCapturableBy(this) && pieceL.enPassantTarget !== -1
 			&& (this.isWhite ? (pieceL.enPassantTarget <= this.y - 2 && pieceL.y >= this.y) : (pieceL.enPassantTarget >= this.y + 2 && pieceL.y <= this.y))
-		) moves.push([new Move({piece: this, fromPos: this.pos, toPos: tileLF.pos, captureAtPos: pieceL.pos}), new Move({piece: this, captureAtPos: tileLF.pos})]);
+		) {
+			const enPassant = [new Move({piece: this, fromPos: this.pos, toPos: tileLF.pos, captureAtPos: pieceL.pos})];
+			if (tileLF.piece) enPassant.push(new Move({piece: this, captureAtPos: tileLF.pos}));
+			moves.push(enPassant);
+		}
 		if (
 			tileRF && (!tileRF?.piece || tileRF.piece.isCapturableBy(this))
-			&& pieceR instanceof Pawn && pieceR.isCapturableBy(this)
+			&& pieceR instanceof Pawn && pieceR.isCapturableBy(this) && pieceR.enPassantTarget !== -1
 			&& (this.isWhite ? (pieceR.enPassantTarget <= this.y - 2 && pieceR.y >= this.y) : (pieceR.enPassantTarget >= this.y + 2 && pieceR.y <= this.y))
-		) moves.push([new Move({piece: this, fromPos: this.pos, toPos: tileRF.pos, captureAtPos: pieceR.pos}), new Move({piece: this, captureAtPos: tileRF.pos})]);
+		) {
+			const enPassant = [new Move({piece: this, fromPos: this.pos, toPos: tileRF.pos, captureAtPos: pieceR.pos})];
+			if (tileRF.piece) enPassant.push(new Move({piece: this, captureAtPos: tileRF.pos}));
+			moves.push(enPassant);
+		}
 		return moves;
 	}
 
 	getPromotions(allMoves: Move[][]) {
 		for (let i = allMoves.length - 1; i >= 0; i--) {
-			const farthestMoveIndex = allMoves[i].reduce((farthestMoveIndex, move, j) => {
+			const halfTurn = allMoves[i];
+			const farthestMoveIndex = halfTurn.reduce((farthestMoveIndex, move, j) => {
 				if (move.piece !== this) return farthestMoveIndex;
-				return (Math.abs(this.y - (move.toPos?.y ?? this.y)) > Math.abs(this.y - (allMoves[i][j]?.toPos?.y ?? this.y))) ? j : farthestMoveIndex;
+				return (Math.abs((move.toPos?.y ?? this.y) - this.y) > Math.abs((halfTurn[farthestMoveIndex]?.toPos?.y ?? this.y) - this.y)) ? j : farthestMoveIndex;
 			}, -1);
-			const farthestMove = allMoves[i][farthestMoveIndex];
+			const farthestMove = halfTurn[farthestMoveIndex];
 
 			if (!(this.board.get(farthestMove?.toPos ?? this.pos) as PromotionTile)?.canPromoteHere) continue;
 			allMoves.splice(i, 1, ...[...Pawn.promotions.entries()].map(entry => {
-				const moveCopy = [...allMoves[i]];
-				moveCopy.splice(farthestMoveIndex, 1, new Move({piece: new entry[0](), spawnAtPos: farthestMove.toPos || this.pos, spawnProps: {board: this.board, hasMoved: true, isWhite: this.isWhite, ...entry[1]}, removeAtPos: farthestMove.fromPos}));
+				const moveCopy = [...halfTurn];
+				const promotion = new entry[0]({board: this.board, hasMoved: true, isWhite: this.isWhite, ...entry[1]});
+				moveCopy.splice(farthestMoveIndex, 1, new Move({pieceNamespace: YggdrasilEngine.getNamespace(promotion) || "", spawnAtPos: farthestMove.toPos || this.pos, spawnProps: {board: this.board, hasMoved: true, isWhite: this.isWhite, name: this.name === "Pawn" ? `${promotion.name} (Promoted Pawn)` : this.name, ...entry[1]}, removeAtPos: farthestMove.fromPos}));
 				return moveCopy;
 			}));
 		}
@@ -157,7 +167,7 @@ class King extends Piece {
 		const x = [-1, 1]; // Left and Right
 		for (let n = 1; n < this.board.width; n++) {
 			if (!x.length) break;
-			for (let i = x.length - 1; i >= 0; i++) {
+			for (let i = x.length - 1; i >= 0; i--) {
 				const tile = this.board.get(new Pos(this.pos.x + n * x[i], this.pos.y));
 				if (!tile) {
 					x.splice(i, 1);

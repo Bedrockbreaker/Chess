@@ -1,20 +1,30 @@
 "use strict";
-const socket = new WebSocket("ws://localhost:7890");
+const socket = new WebSocket(`ws://${location.host}`);
 let canvas;
 let ctx;
-let sidebarElement;
-let sidebarIcon;
-let sidebarName;
-let sidebarSubtitle;
-let sidebarBody;
-let sidebarCartesianCoords;
-let sidebarHexCoords;
+let pieceDisplay;
+let pieceIcon;
+let pieceName;
+let pieceNamespace;
+let pieceStats;
+let pieceCartesianCoords;
+let pieceHexCoords;
+let prevMoveMain;
+let prevMoveEval;
+let stateStackDiv;
+let stateStackList;
+let potentialMovesDisplay;
+let audioPlayer;
 let mouseX = -1;
 let mouseY = -1;
+let isShiftDown = false;
 const images = new Map();
 const queue = new Map();
-let state = undefined;
+let state;
 let selectedPos;
+let moveOptions;
+let hoveredMove = -1;
+let soloMove = -1;
 document.addEventListener("DOMContentLoaded", () => {
     const canvasElement = document.getElementById("canvas");
     const context = canvasElement.getContext("2d");
@@ -22,13 +32,19 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error("Unable to establish canvas context");
     canvas = canvasElement;
     ctx = context;
-    sidebarElement = document.getElementById("pieceDisplay");
-    sidebarIcon = document.getElementById("pieceIcon");
-    sidebarName = document.getElementById("pieceName");
-    sidebarSubtitle = document.getElementById("pieceNamespace");
-    sidebarBody = document.getElementById("pieceStats");
-    sidebarCartesianCoords = document.getElementById("pieceCartesianCoords");
-    sidebarHexCoords = document.getElementById("pieceHexCoords");
+    pieceDisplay = document.getElementById("pieceDisplay");
+    pieceIcon = document.getElementById("pieceIcon");
+    pieceName = document.getElementById("pieceName");
+    pieceNamespace = document.getElementById("pieceNamespace");
+    pieceStats = document.getElementById("pieceStats");
+    pieceCartesianCoords = document.getElementById("pieceCartesianCoords");
+    pieceHexCoords = document.getElementById("pieceHexCoords");
+    prevMoveMain = document.getElementById("prevMoveMain");
+    prevMoveEval = document.getElementById("prevMoveEval");
+    stateStackDiv = document.getElementById("stateStack");
+    stateStackList = document.getElementById("stateStackList");
+    potentialMovesDisplay = document.getElementById("potentialMoves");
+    audioPlayer = document.getElementById("audioPlayer");
     canvasElement.height = canvasElement.width;
     context.imageSmoothingEnabled = false;
     context.strokeStyle = "white";
@@ -45,6 +61,7 @@ window.onmousemove = (event) => {
     const bb = canvas.getBoundingClientRect();
     mouseX = (event.clientX - bb.left) / bb.width;
     mouseY = (event.clientY - bb.top) / bb.height;
+    updateMoveDisplay();
     if (!selectedPos)
         updateSidebar();
 };
@@ -54,16 +71,124 @@ window.onmouseup = (event) => {
     const x = Math.floor(mouseX * state.board[0].length);
     const y = Math.floor(mouseY * state.board.length);
     const tile = state.board[y]?.[x];
-    selectedPos = tile?.piece && tile.pos !== selectedPos ? tile.pos : undefined;
+    if (hoveredMove > -1) {
+        sendMove(potentialMovesDisplay.children[hoveredMove].innerHTML);
+    }
+    else {
+        selectedPos = tile?.piece && tile.pos !== selectedPos ? tile.pos : undefined;
+    }
+    updateMoveDisplay();
     updateSidebar();
+    if (selectedPos)
+        socket.send(`moves ${getHexPos({ x: x, y: y })}`);
+};
+let keydownTimeout;
+window.onkeydown = (event) => {
+    if (event.repeat)
+        return;
+    const shiftChanged = isShiftDown !== event.shiftKey;
+    isShiftDown = event.shiftKey;
+    if (shiftChanged)
+        updateMoveDisplay();
+    if (event.key === "`")
+        keydownTimeout = setTimeout(() => socket.send("reset"), 500);
+};
+window.onkeyup = (event) => {
+    const shiftChanged = isShiftDown !== event.shiftKey;
+    isShiftDown = event.shiftKey;
+    if (shiftChanged)
+        updateMoveDisplay();
+    if (event.key === "`")
+        clearTimeout(keydownTimeout);
 };
 socket.onopen = (event) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 };
+const messageParser = /(\w+) (.+)/m;
 socket.onmessage = (event) => {
-    state = JSON.parse(event.data);
-    console.log(state);
-    renderState();
+    const message = messageParser.exec(event.data);
+    switch (message?.[1]) {
+        case "state":
+            const isFirstLoad = state ? false : true;
+            state = JSON.parse(message[2]);
+            if (!state)
+                return;
+            hoveredMove = -1;
+            soloMove = -1;
+            moveOptions = undefined;
+            selectedPos = undefined;
+            if (state.moves.length) {
+                prevMoveMain.innerHTML = "";
+            }
+            else {
+                prevMoveMain.innerHTML = "<code>New Game</code>";
+            }
+            for (let i = state.moves.length - 1; i >= 0; i--) {
+                if (!state.moves[i].canContinue && prevMoveMain.innerHTML)
+                    break;
+                prevMoveMain.innerHTML = `<code>${state.moves[i].serialized}</code>` + prevMoveMain.innerHTML;
+                // TODO: set color of prevMoveIcon and number of prevMoveEval according to output from NN
+            }
+            if (!isFirstLoad) {
+                audioPlayer.currentTime = 0;
+                audioPlayer.preservesPitch = false;
+                audioPlayer.playbackRate = 1 + (Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random())) / 10; // 1 + random gaussian with variance of (1/10)^2
+                audioPlayer.play().catch(console.log);
+            }
+            // TODO: allow clicking on a move to temporarily display the board position at that moment
+            stateStackList.innerHTML = "";
+            let fullTurn = document.createElement("li");
+            let innerHTML = "<code>";
+            let isWhiteTurn = true;
+            for (let i = 0; i < state.moves.length; i++) {
+                if (state.moves[i - 1]?.canContinue)
+                    innerHTML += "<br>";
+                innerHTML += state.moves[i].serialized;
+                if (state.moves[i].canContinue && i < state.moves.length - 1)
+                    continue;
+                innerHTML += "</code>";
+                if (!isWhiteTurn || i === state.moves.length - 1) {
+                    fullTurn.innerHTML = innerHTML;
+                    stateStackList.appendChild(fullTurn);
+                    fullTurn = document.createElement("li");
+                    innerHTML = "<code>";
+                }
+                else {
+                    innerHTML += "<code>";
+                }
+                isWhiteTurn = !isWhiteTurn;
+            }
+            stateStackDiv.style.minHeight = `calc(100% - ${stateStackDiv.offsetTop}px)`;
+            stateStackDiv.scrollTop = stateStackDiv.scrollHeight;
+            updateMoveDisplay();
+            renderState();
+            break;
+        case "moves":
+            moveOptions = JSON.parse(message[2]);
+            if (!moveOptions || !state)
+                return;
+            moveOptions.sort((halfTurnA, halfTurnB) => halfTurnA[0].serialized > halfTurnB[0].serialized ? 1 : -1);
+            potentialMovesDisplay.innerHTML = "";
+            for (let i = 0; i < moveOptions.length; i++) {
+                const halfTurn = moveOptions[i];
+                const codeElement = document.createElement("code");
+                for (let j = 0; j < halfTurn.length; j++) {
+                    if (j > 0)
+                        codeElement.innerHTML += "<br>";
+                    codeElement.innerHTML += halfTurn[j].serialized;
+                }
+                codeElement.onmouseover = (event) => soloMove = i;
+                // Prevents all potential moves from rapidly flashing on the screen as the mouse moves between the blocks
+                codeElement.onmouseout = (event) => setTimeout(() => soloMove = (soloMove === i ? -1 : soloMove), 50);
+                codeElement.onclick = (event) => sendMove(codeElement.innerHTML);
+                potentialMovesDisplay.appendChild(codeElement);
+            }
+            updateMoveDisplay();
+            break;
+        default:
+            console.log("Received unknown message over websocket:", event.data);
+            break;
+    }
 };
 function renderState() {
     window.requestAnimationFrame(renderState);
@@ -73,7 +198,10 @@ function renderState() {
     const board = state.board;
     const dw = canvas.width / board[0].length;
     const dh = canvas.height / board.length;
+    // TODO: move these 2 lines into window.onresize? (or some other "setupCanvas" function)
     ctx.font = `${Math.floor(dw / 4)}px Calibri`;
+    ctx.textBaseline = "top";
+    // Board squares and markings
     for (let y = 0; y < board.length; y++) {
         for (let x = 0; x < board[0].length; x++) {
             const dx = x * dw;
@@ -82,16 +210,88 @@ function renderState() {
             ctx.fillRect(dx, dy, dw, dh);
             if (y === 0) {
                 ctx.fillStyle = x % 2 === 1 ? "#9b9b9b" : "#5f5f5f";
-                ctx.fillText(x.toString(), dx + 1, dw / 5);
+                ctx.fillText(x.toString(), dx + 1, 0);
+            }
+        }
+        if (y > 0) {
+            ctx.fillStyle = y % 2 === 1 ? "#9b9b9b" : "#5f5f5f";
+            ctx.fillText(y.toString(), 1, y * dh);
+        }
+    }
+    // Movement overlays and pieces
+    let renderedHalfTurn = false;
+    for (let y = 0; y < board.length; y++) {
+        for (let x = 0; x < board[0].length; x++) {
+            const dx = x * dw;
+            const dy = y * dh;
+            if (!renderedHalfTurn) {
+                const moves = (selectedPos ? (soloMove > -1 ? [moveOptions?.[soloMove] ?? []] : moveOptions) : [state.moves]) || [];
+                const overlaysAtPos = new Map(); // Bitflags indicating overlays mapped to each position on the board
+                for (let i = 0; i < moves.length; i++) {
+                    const halfTurn = moves[i];
+                    for (let j = halfTurn.length - 1; j >= 0; j--) {
+                        const move = halfTurn[j];
+                        if (!selectedPos && !move.canContinue && renderedHalfTurn)
+                            break; // If rendering previous move, only render that last half-turn
+                        if (move.removeAtPos) {
+                            const key = getHexPos(move.removeAtPos);
+                            overlaysAtPos.set(key, (overlaysAtPos.get(key) ?? 0) | 0x1);
+                        }
+                        if (move.captureAtPos) {
+                            const key = getHexPos(move.captureAtPos);
+                            overlaysAtPos.set(key, (overlaysAtPos.get(key) ?? 0) | 0x2);
+                        }
+                        if (move.spawnAtPos) {
+                            const key = getHexPos(move.spawnAtPos);
+                            overlaysAtPos.set(key, (overlaysAtPos.get(key) ?? 0) | 0x4);
+                        }
+                        if (move.dropAtPos) {
+                            const key = getHexPos(move.dropAtPos);
+                            overlaysAtPos.set(key, (overlaysAtPos.get(key) ?? 0) | 0x8);
+                        }
+                        if (move.fromPos && move.toPos) {
+                            // TODO: special overlay for 0-leap?
+                            const fromKey = getHexPos(move.fromPos);
+                            overlaysAtPos.set(fromKey, (overlaysAtPos.get(fromKey) ?? 0) | 0x10);
+                            const toKey = getHexPos(move.toPos);
+                            overlaysAtPos.set(toKey, (overlaysAtPos.get(toKey) ?? 0) | 0x10);
+                        }
+                        renderedHalfTurn = true;
+                    }
+                }
+                const positions = [...overlaysAtPos.entries()];
+                for (let j = 0; j < positions.length; j++) {
+                    const pos = getPosFromHex(positions[j][0]);
+                    const overlays = positions[j][1];
+                    const polygon = overlays.toString(2).replace(/0/g, "").length;
+                    let overlayN = 0;
+                    if (overlays & 0x1) { // removeAtPos
+                        ctx.fillStyle = "#D1696977"; // RGBA
+                        drawOverlay(pos.x, pos.y, dw, dh, polygon, overlayN++);
+                    }
+                    if (overlays & 0x2) { // captureAtPos
+                        ctx.fillStyle = "#CE917877";
+                        drawOverlay(pos.x, pos.y, dw, dh, polygon, overlayN++);
+                    }
+                    if (overlays & 0x4) { // spawnAtPos
+                        ctx.fillStyle = "#C586C077";
+                        drawOverlay(pos.x, pos.y, dw, dh, polygon, overlayN++);
+                    }
+                    if (overlays & 0x8) { // dropAtPos
+                        ctx.fillStyle = "#6A995577";
+                        drawOverlay(pos.x, pos.y, dw, dh, polygon, overlayN++);
+                    }
+                    if (overlays & 0x10) { // fromPos and toPos
+                        ctx.fillStyle = "#569CD677";
+                        drawOverlay(pos.x, pos.y, dw, dh, polygon, overlayN++);
+                    }
+                }
+                renderedHalfTurn = true;
             }
             const tile = board[y][x];
             if (!tile.piece)
                 continue;
             drawImage(getAssetPath(tile), dx, dy, dw, dh);
-        }
-        if (y > 0) {
-            ctx.fillStyle = y % 2 === 1 ? "#9b9b9b" : "#5f5f5f";
-            ctx.fillText(y.toString(), 1, y * dh + dw / 5);
         }
     }
     drawImage("assets/common/select.png", (selectedPos?.x ?? Math.floor(mouseX * state.board[0].length)) * dw, (selectedPos?.y ?? Math.floor(mouseY * state.board.length)) * dh, dw, dh);
@@ -105,13 +305,13 @@ function updateSidebar() {
         return;
     memoizedPiece = hoveredTile?.piece;
     if (!hoveredTile?.piece)
-        return sidebarElement.classList.add("hidden");
-    sidebarIcon.src = getAssetPath(hoveredTile);
-    sidebarName.textContent = hoveredTile.piece.name;
-    sidebarSubtitle.textContent = hoveredTile.pieceNamespace || "";
-    sidebarCartesianCoords.textContent = `(${hoveredTile.pos.x},${hoveredTile.pos.y})`;
-    sidebarHexCoords.textContent = `${hoveredTile.pos.y.toString(16).padStart(4, "0")}${hoveredTile.pos.x.toString(16).padStart(4, "0")}`;
-    sidebarBody.innerHTML = "";
+        return pieceDisplay.classList.add("hidden");
+    pieceIcon.src = getAssetPath(hoveredTile);
+    pieceName.textContent = hoveredTile.piece.name;
+    pieceNamespace.textContent = hoveredTile.pieceNamespace || "";
+    pieceCartesianCoords.textContent = `(${hoveredTile.pos.x},${hoveredTile.pos.y})`;
+    pieceHexCoords.textContent = getHexPos(hoveredTile.pos);
+    pieceStats.innerHTML = "";
     const pieceEntries = Object.entries(hoveredTile.piece);
     for (let i = 0; i < pieceEntries.length; i++) {
         const key = pieceEntries[i][0];
@@ -122,11 +322,52 @@ function updateSidebar() {
         const valueInline = document.createElement("code");
         valueInline.textContent = JSON.stringify(pieceEntries[i][1]);
         valueInline.classList.add(typeof (pieceEntries[i])[1]);
-        sidebarBody.appendChild(keyInline);
-        sidebarBody.appendChild(valueInline);
-        sidebarBody.appendChild(document.createElement("br"));
+        pieceStats.appendChild(keyInline);
+        pieceStats.appendChild(valueInline);
+        pieceStats.appendChild(document.createElement("br"));
     }
-    sidebarElement.classList.remove("hidden");
+    pieceDisplay.classList.remove("hidden");
+}
+function updateMoveDisplay() {
+    if (!canvas || !ctx || !state)
+        return;
+    const childRemoveHighlight = potentialMovesDisplay.children[hoveredMove];
+    if (childRemoveHighlight)
+        childRemoveHighlight.classList.remove("highlighted");
+    if (selectedPos && (moveOptions?.length ?? 0) > 0) {
+        potentialMovesDisplay.classList.remove("hidden");
+    }
+    else {
+        potentialMovesDisplay.classList.add("hidden");
+    }
+    if (!moveOptions)
+        return;
+    const x = Math.floor(mouseX * state.board[0].length);
+    const y = Math.floor(mouseY * state.board.length);
+    const moves = moveOptions.filter(halfTurn => halfTurn.some(move => {
+        return selectedPos && (selectedPos.x !== x || selectedPos.y !== y || isShiftDown)
+            && ((move.fromPos?.x === x && move.fromPos.y === y)
+                || (move.toPos?.x === x && move.toPos.y === y)
+                || (move.removeAtPos?.x === x && move.removeAtPos.y === y)
+                || (move.captureAtPos?.x === x && move.captureAtPos.y === y)
+                || (move.spawnAtPos?.x === x && move.spawnAtPos.y === y)
+                || (move.dropAtPos?.x === x && move.dropAtPos.y === y));
+    }));
+    if (moves.length > 1)
+        return;
+    hoveredMove = moveOptions.findIndex(halfTurn => halfTurn === moves[0]) ?? -1;
+    const childAddHighlight = potentialMovesDisplay.children[hoveredMove];
+    if (childAddHighlight)
+        childAddHighlight.classList.add("highlighted");
+}
+function sendMove(serializedMove) {
+    socket.send(`move ["${serializedMove.replace(/<br>/g, "\",\"").replace(/"/g, "\\\"")}"]`);
+    hoveredMove = -1;
+    soloMove = -1;
+    moveOptions = undefined;
+    selectedPos = undefined;
+    updateMoveDisplay();
+    updateSidebar();
 }
 /**
  * Ensures an image is loaded, then draws it.
@@ -155,8 +396,50 @@ function drawImage(path, x, y, width, height) {
         }
     };
 }
+// Equal area slices of a square
+const pentagon = [[[.5, .5], [.5, 0], [1, 0], [1, 0.3]], [[.5, .5], [1, 0.3], [1, 1], [11 / 12, 1]], [[.5, .5], [11 / 12, 1], [1 / 12, 1]], [[.5, .5], [1 / 12, 1], [0, 1], [0, 0.3]], [[.5, .5], [0, 0.3], [0, 0], [.5, 0]]];
+const squares = [[[.5, .5], [.5, 0], [1, 0], [1, .5]], [[.5, .5], [1, .5], [1, 1], [.5, 1]], [[.5, .5], [.5, 1], [0, 1], [0, .5]], [[.5, .5], [0, .5], [0, 0], [.5, 0]]];
+const triads = [[[.5, .5], [.5, 0], [1, 0], [1, 5 / 6]], [[.5, .5], [1, 5 / 6], [1, 1], [0, 1], [0, 5 / 6]], [[.5, .5], [0, 5 / 6], [0, 0], [.5, 0]]];
+const triangles = [[[0, 0], [1, 0], [0, 1]], [[1, 0], [1, 1], [0, 1]]];
+const quad = [[[0, 0], [1, 0], [1, 1], [0, 1]]];
+function drawOverlay(x, y, dx, dy, polygon, polyN = 0) {
+    if (!canvas || !ctx)
+        return;
+    let vertices;
+    switch (polygon) {
+        case 2:
+            vertices = triangles[polyN];
+            break;
+        case 3:
+            vertices = triads[polyN];
+            break;
+        case 4:
+            vertices = squares[polyN];
+            break;
+        case 5:
+            vertices = pentagon[polyN];
+            break;
+        default:
+            vertices = quad[polyN];
+            break;
+    }
+    ctx.beginPath();
+    ctx.moveTo(x * dx + dx * vertices[0][0], y * dy + dy * vertices[0][1]);
+    for (let k = 1; k < vertices.length; k++) {
+        ctx.lineTo(x * dx + dx * vertices[k][0], y * dy + dy * vertices[k][1]);
+    }
+    ctx.closePath();
+    ctx.fill();
+}
 function getAssetPath(tile) {
     if (!tile.pieceNamespace || !tile.piece)
         return "";
     return `assets/${tile.pieceNamespace.split(":")[0]}/${tile.pieceNamespace.split(":")[1]}_${tile.piece.isWhite ? "white" : "black"}.png`;
 }
+function getHexPos(pos) {
+    return `${pos.y.toString(16).padStart(4, "0")}${pos.x.toString(16).padStart(4, "0")}`;
+}
+function getPosFromHex(hex) {
+    return { x: parseInt(hex.slice(4), 16), y: parseInt(hex.slice(0, 4), 16) };
+}
+//# sourceMappingURL=frontend.js.map

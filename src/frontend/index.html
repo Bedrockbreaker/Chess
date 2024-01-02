@@ -9,6 +9,20 @@
 	<body>
 		<div id="container">
 			<canvas id="canvas" width="800px"></canvas>
+			<div id="gameMoves">
+				<div id="prevMove">
+					<div id="prevMoveEvalIcon"></div>
+					<div id="prevMoveMain">
+						<code>New Game</code>
+					</div>
+					<span id="prevMoveEval">+0.0</span>
+				</div>
+				<hr>
+				<div id="stateStack">
+					<ol id="stateStackList"></ol>
+				</div>
+			</div>
+			<div id="potentialMoves" class="hidden"></div>
 			<div id="pieceDisplay" class="hidden">
 				<svg width="130%" height="56" style="position: absolute;">
 					<mask id="semicircle">
@@ -20,11 +34,11 @@
 				<div id="pieceHeader">
 					<img id="pieceIcon" width="32px" height="32px" />
 					<div id="pieceNames">
-						<h2 id="pieceName"></h2>
+						<span id="pieceName"></span>
 						<code id="pieceNamespace"></code>
 					</div>
 					<div id="pieceCoords">
-						<p id="pieceCartesianCoords"></p>
+						<span id="pieceCartesianCoords"></span>
 						<code id="pieceHexCoords"></code>
 					</div>
 				</div>
@@ -34,6 +48,7 @@
 		<!-- Predownload Common Assets -->
 		<div style="display: none;">
 			<img src="assets/common/select.png">
+			<audio src="assets/common/wood_hit.wav" id="audioPlayer"></audio>
 		</div>
 	</body>
 </html>

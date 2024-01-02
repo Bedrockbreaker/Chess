@@ -10,8 +10,14 @@ class Pos {
 	y: number = 0;
 
 	constructor();
+	constructor(hex?: string)
 	constructor(x: number, y: number)
-	constructor(x?: number, y?: number) {
+	constructor(x?: number | string, y?: number) {
+		if (typeof(x) === "string") {
+			this.y = parseInt(x.slice(0, 4), 16);
+			this.x = parseInt(x.slice(4), 16);
+			return;
+		}
 		this.x = x ?? NaN;
 		this.y = y ?? NaN;
 	}
@@ -34,6 +40,10 @@ class Pos {
 
 	isValid() {
 		return !Number.isNaN(this.x) && !Number.isNaN(this.y);
+	}
+
+	toHex() {
+		return this.y.toString(16).padStart(4, "0") + this.x.toString(16).padStart(4, "0");
 	}
 }
 
@@ -86,7 +96,7 @@ class Board extends Array<Tile[]> {
 		for (let y = 0; y < this.height; y++) {
 			copy[y] = [];
 			for (let x = 0; x < this.width; x++) {
-				copy[y][x] = this[y][x].clone(this);
+				copy[y][x] = this[y][x].clone(copy);
 			}
 		}
 
@@ -105,10 +115,6 @@ class Board extends Array<Tile[]> {
 		return this.length;
 	}
 }
-Object.defineProperty(Board, "clone", {enumerable: false});
-Object.defineProperty(Board, "get", {enumerable: false});
-Object.defineProperty(Board, "width", {enumerable: false});
-Object.defineProperty(Board, "height", {enumerable: false});
 
 interface PieceConstructorOptions {
 	board?: Board,
@@ -244,24 +250,23 @@ enum Directions {
  * }
  * ```
  */
-function atom<This extends Piece>(x: number, y: number = 0, range: number = 1, directions: Directions[] = [Directions.Forward, Directions.Left, Directions.Back, Directions.Right], modality?: boolean, callback?: (piece: This, newMoves: Move[][], allMoves: Move[][]) => Move[][]) {
-	// FIXME: move generation borked, plz fix
-	[x, y] = [Math.max(x, y), Math.min(x, y)];
-	// Each item corresponds to its respective index in Direction
-	const allMods = [
-		(y !== 0 ? [0, 1, 4, 5] : [0]), (y !== 0 ? [2, 3, 6, 7] : [2]), (y !== 0 ? [0, 3, 4, 7] : [3]), (y !== 0 ? [1, 2, 5, 6] : [1]),
-		[0, 1, 4, 5], [2, 3, 6, 7], [0, 3, 4, 7], [1, 2, 5, 6],
-		[0], (x === y ? [1] : [5]), (x === y ? [0] : [4]), [1],
-		[3], (x === y ? [3] : [7]), [2], (x === y ? [2] : [6]),
-		[0, 1, 2, 3], [4, 5, 6, 7], [0, 2, 5, 7], [1, 3, 4, 6],
-		[0, 5], [1, 4], [3, 6], [2, 7],
-		[0, 7], [2, 5], [3, 4], [1, 6]
-	];
-	const indices = [...new Set(directions.flatMap(dir => allMods[dir]))];
-	const dir = [new Pos(-y, x), new Pos(x, y), new Pos(y, -x), new Pos(-x, -y), ...(y !== 0 && x !== y ? [new Pos(-x, y), new Pos(y, x), new Pos(x, -y), new Pos(-y, -x)] : [])].filter((pos, i) => indices.includes(i));
-
+function atom<This extends Piece>(x: number, y: number = 0, range: number = 1, directions: Directions[] = [Directions.Forward, Directions.Left, Directions.Back, Directions.Right], modality?: boolean, callback?: (piece: This, newMoves: Move[][], oldMoves: Move[][], allMoves: Move[][]) => Move[][]) {
 	return function decorator<Args extends [Move[]], Return extends Move[][]>(target: (this: This, ...args: Args) => Return, context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>) {
 		return function wrapper(this: This, ...args: Args) {
+			[x, y] = [Math.max(x, y), Math.min(x, y)];
+			// Each item corresponds to its respective index in Direction
+			const allMods = [
+				(y !== 0 ? [0, 1, 4, 5] : [0]), (y !== 0 ? [2, 3, 6, 7] : [2]), (y !== 0 ? [0, 3, 4, 7] : [3]), (y !== 0 ? [1, 2, 5, 6] : [1]),
+				[0, 1, 4, 5], [2, 3, 6, 7], [0, 3, 4, 7], [1, 2, 5, 6],
+				[0], (x === y ? [1] : [5]), (x === y ? [0] : [4]), [1],
+				[3], (x === y ? [3] : [7]), [2], (x === y ? [2] : [6]),
+				[0, 1, 2, 3], [4, 5, 6, 7], [0, 2, 5, 7], [1, 3, 4, 6],
+				[0, 5], [1, 4], [3, 6], [2, 7],
+				[0, 7], [2, 5], [3, 4], [1, 6]
+			];
+			const indices = [...new Set(directions.flatMap(dir => allMods[dir]))];
+			const dir = [new Pos(-y, x), new Pos(x, y), new Pos(y, -x), new Pos(-x, -y), ...(y !== 0 && x !== y ? [new Pos(-x, y), new Pos(y, x), new Pos(x, -y), new Pos(-y, -x)] : [])].filter((pos, i) => indices.includes(i));
+
 			const newMoves: Move[][] = [];
 			for (let i = 1; i < (range !== 0 ? range + 1 : this.board.width * this.board.height); i++) {
 				if (!dir.length) break;
@@ -275,14 +280,15 @@ function atom<This extends Piece>(x: number, y: number = 0, range: number = 1, d
 						dir.splice(j, 1);
 						// If non-capturing move, or can't capture piece at tile, continue
 						if (modality === false || !tile.piece.isCapturableBy(this)) continue;
-						move.captureAtPos = tile.piece.pos;
+						move.captureAtPos = tile.pos;
+					} else if (modality === true) {
+						continue;
 					}
 					newMoves.push([move]);
 				}
 			}
-			const allMoves = target.call(this, ...args);
-			allMoves.push(...newMoves);
-			return callback ? callback(this, newMoves, allMoves) : allMoves;
+			const oldMoves = target.call(this, ...args);
+			return callback ? callback(this, newMoves, oldMoves, [...oldMoves, ...newMoves]) : [...oldMoves, ...newMoves];
 		}
 	}
 }
@@ -327,6 +333,18 @@ class Move {
 		this.dropAtPos = options.dropAtPos;
 		this.canContinue = options.canContinue || false;
 	}
+
+	serialize() {
+		let ycin = "";
+		if (this.piece || this.pieceNamespace) ycin += `${this.pieceNamespace || YggdrasilEngine.getNamespace(this.piece)} `;
+		if (this.fromPos && this.toPos) ycin += `-${this.fromPos.toHex()}${this.toPos.toHex()}`;
+		if (this.removeAtPos) ycin += `.${this.removeAtPos.toHex()}`;
+		if (this.captureAtPos) ycin += `x${this.captureAtPos.toHex()}`;
+		if (this.spawnAtPos) ycin += `+${this.spawnAtPos.toHex()}${JSON.stringify(this.spawnProps || this.piece?.JSONify()) || ""}`;
+		if (this.dropAtPos) ycin += `*${this.dropAtPos.toHex()}`;
+		// if (i !== this.stateStack.length - 1) ycin += j === moves.length - 1 ? "\n\n" : "\n";
+		return ycin;
+	}
 }
 
 interface GameOptions {
@@ -364,6 +382,8 @@ class YggdrasilEngine {
 	}
 
 	stateStack: {board: Board, moves: Move[], prevStateHash: string, eventBus: Map<Events, ((...Args: any[]) => void)[]>}[] = [];
+
+	isLoaded = false;
 
 	get state() {
 		return this.stateStack[this.stateStack.length-1];
@@ -403,7 +423,17 @@ class YggdrasilEngine {
 		}
 	}
 
+	static getNamespace(piece?: Piece) {
+		return YggdrasilEngine.namespaceRegistry.get(piece?.constructor as new (options: PieceConstructorOptions) => Piece);
+	}
+
 	async load(config: GameOptions) {
+		if (this.isLoaded) {
+			YggdrasilEngine.INSTANCE = new YggdrasilEngine();
+			await YggdrasilEngine.INSTANCE.load(config);
+			return;
+		}
+
 		const loadQueue: Promise<NodeModule>[] = [];
 		config.plugins.forEach(plugin => {
 			loadQueue.push(import(`./plugins/${plugin}.ts`));
@@ -427,11 +457,11 @@ class YggdrasilEngine {
 			});
 		}
 
+		this.isLoaded = true;
 		this.emitEvent(Events.loadEnd);
 	}
 
 	emitEvent<Args>(event: Events, ...args: Args[]) {
-		console.log(`Emitting event: ${Object.values(Events)[event]}`);
 		this.eventBus.get(event)?.forEach(listener => listener(...args));
 	}
 
@@ -472,17 +502,16 @@ class YggdrasilEngine {
 		if (moves.length === 0) return;
 		this.stateStack.push({board: new Board(), moves: [...this.state.moves], prevStateHash: this.hashState(), eventBus: new Map()});
 		this.state.board = this.stateStack[this.stateStack.length-2].board.clone(); // Clone the board after pushing to the stack, so that event handlers are registered properly.
-		console.log("Pushing state");
 
 		let halfTurn: Move[] = [];
 		for (let i = 0; i < moves.length; i++) {
 			const move = moves[i];
 			halfTurn.push(move);
 
-			let piece = this.board.get(move.piece?.pos || new Pos())?.piece;
+			let piece = this.board.get(move.fromPos || new Pos())?.piece;
 			if (!piece && move.pieceNamespace) {
-				const testPiece = this.board.get(move.fromPos || move.captureAtPos || move.dropAtPos || new Pos())?.piece;
-				if (testPiece && move.pieceNamespace === YggdrasilEngine.namespaceRegistry.get(testPiece.constructor as new (options: PieceConstructorOptions) => Piece)) piece = testPiece;
+				const testPiece = this.board.get(move.fromPos || new Pos())?.piece;
+				if (testPiece && move.pieceNamespace === YggdrasilEngine.getNamespace(testPiece)) piece = testPiece;
 			}
 			move.piece = piece;
 
@@ -502,7 +531,7 @@ class YggdrasilEngine {
 				const pieceClass = YggdrasilEngine.pieceRegistry.get(move.pieceNamespace);
 				const tile = this.board.get(move.spawnAtPos);
 				if (pieceClass && tile) {
-					piece = new pieceClass(move.spawnProps || {});
+					piece = new pieceClass({board: this.board, pos: move.spawnAtPos, ...(move.spawnProps || {})});
 					tile.piece = piece;
 				}
 			}
@@ -533,7 +562,6 @@ class YggdrasilEngine {
 	 * Pops the state stack
 	 */
 	undoMove() {
-		console.log("Popping state");
 		this.stateStack.pop();
 	}
 
@@ -566,36 +594,37 @@ class YggdrasilEngine {
 				const singleMove = halfTurnMoves[j];
 				
 				const pieceNamespace = namespaceRegex.exec(singleMove)?.[1];
-				if (!pieceNamespace || !YggdrasilEngine.pieceRegistry.has(pieceNamespace)) console.warn(`Warning: No such piece exists: ${pieceNamespace}`);
+				if (pieceNamespace && !YggdrasilEngine.pieceRegistry.has(pieceNamespace)) console.warn(`Warning: No such piece exists: ${pieceNamespace}`);
 
 				const fromToPos = fromToPosRegex.exec(singleMove)?.[1];
-				const fromPos = this.hexToPos(fromToPos?.slice(0, 8));
-				const toPos = this.hexToPos(fromToPos?.slice(8));
+				const fromPos = new Pos(fromToPos?.slice(0, 8));
+				const toPos = new Pos(fromToPos?.slice(8));
 
-				const removeAtPos = this.hexToPos(removeAtPosRegex.exec(singleMove)?.[1]);
-				const captureAtPos = this.hexToPos(captureAtPosRegex.exec(singleMove)?.[1]);
+				const removeAtPos = new Pos(removeAtPosRegex.exec(singleMove)?.[1]);
+				const captureAtPos = new Pos(captureAtPosRegex.exec(singleMove)?.[1]);
 
 				const spawn = spawnRegex.exec(singleMove);
-				const spawnAtPos = spawn?.[1];
+				const spawnAtPos = new Pos(spawn?.[1]);
 				const spawnProps = spawn?.[2];
 
-				const dropAtPos = this.hexToPos(dropAtPosRegex.exec(singleMove)?.[1]);
+				const dropAtPos = new Pos(dropAtPosRegex.exec(singleMove)?.[1]);
 
-				const move = new Move({pieceNamespace: pieceNamespace, removeAtPos: removeAtPos, canContinue: j < halfTurnMoves.length - 1});
-				if (fromPos && toPos && pieceNamespace) {
+				const move = new Move({pieceNamespace: pieceNamespace, canContinue: j < halfTurnMoves.length - 1});
+				if (removeAtPos.isValid()) move.removeAtPos = removeAtPos;
+				if (fromPos.isValid() && toPos.isValid() && pieceNamespace) {
 					move.fromPos = fromPos;
 					move.toPos = toPos;
 				}
-				if (pieceNamespace && captureAtPos) move.captureAtPos = captureAtPos;
-				if (pieceNamespace && spawnAtPos) {
+				if (pieceNamespace && captureAtPos.isValid()) move.captureAtPos = captureAtPos;
+				if (pieceNamespace && spawnAtPos.isValid()) {
 					try {
 						if (spawnProps) move.spawnProps = JSON.parse(spawnProps) || {};
-						move.spawnAtPos = this.hexToPos(spawnAtPos);
+						move.spawnAtPos = spawnAtPos;
 					} catch (err) {
 						console.warn(`Warning: Invalid JSON syntax: ${spawnProps}\n`, err);
 					}
 				}
-				if (pieceNamespace && dropAtPos) move.dropAtPos = dropAtPos;
+				if (pieceNamespace && dropAtPos.isValid()) move.dropAtPos = dropAtPos;
 
 				moves.push(move);
 			}
@@ -604,44 +633,14 @@ class YggdrasilEngine {
 		return moves;
 	}
 
-	serializeYCIN() {
-		let ycin = "";
-		for (let i = 1; i < this.stateStack.length; i++) {
-			const moves = this.stateStack[i].moves;
-			for (let j = 0; j < moves.length; j++) {
-				const singleMove = moves[j];
-				if (singleMove.piece || singleMove.pieceNamespace) ycin += `${singleMove.pieceNamespace || YggdrasilEngine.namespaceRegistry.get(singleMove.piece?.constructor as new (options: PieceConstructorOptions) => Piece)} `;
-				if (singleMove.fromPos && singleMove.toPos) ycin += `-${this.posToHex(singleMove.fromPos)}${this.posToHex(singleMove.toPos)}`;
-				if (singleMove.removeAtPos) ycin += `.${this.posToHex(singleMove.removeAtPos)}`;
-				if (singleMove.captureAtPos) ycin += `x${this.posToHex(singleMove.captureAtPos)}`;
-				if (singleMove.spawnAtPos) ycin += `+${this.posToHex(singleMove.spawnAtPos)}${JSON.stringify(singleMove.piece?.JSONify()) || ""}`;
-				if (singleMove.dropAtPos) ycin += `*${this.posToHex(singleMove.dropAtPos)}`;
-				if (i !== this.stateStack.length - 1) ycin += j === moves.length - 1 ? "\n\n" : "\n";
-			}
-		}
-		return ycin;
-	}
-
 	private hashState() {
 		return Hash(this, {excludeKeys: key => key !== "stateStack", unorderedArrays: true, unorderedObjects: true, unorderedSets: true});
-	}
-
-	private hexToPos(hex: string = "") {
-		if (!hex) return;
-		const rank = parseInt(hex.slice(0, 4), 16);
-		const file = parseInt(hex.slice(4), 16);
-		if (Number.isNaN(rank) || Number.isNaN(file)) return;
-		return new Pos(file, rank);
-	}
-
-	private posToHex(pos: Pos) {
-		return pos.x.toString(16).padStart(4, "0") + pos.y.toString(16).padStart(4, "0");
 	}
 }
 
 export {
 	Pos, Tile, Board,
 	Piece, type PieceConstructorOptions,
-	Directions, atom, Move,
+	Directions, atom, Move, type MoveDescriptor,
 	YggdrasilEngine, type GameOptions,
 }

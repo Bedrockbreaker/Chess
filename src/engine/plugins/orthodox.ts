@@ -1,6 +1,15 @@
 import { YggdrasilEngine, Piece, Pos, Tile, Board, Directions, atom, Move, type PieceConstructorOptions } from "../yggdrasil.ts"
 
-const MODID = "orthodox";
+const PLUGINID = "orthodox";
+
+YggdrasilEngine.Plugin(PLUGINID, (engine: YggdrasilEngine) => {
+	engine.registerPiece(PLUGINID, "pawn", Pawn);
+	engine.registerPiece(PLUGINID, "rook", Rook);
+	engine.registerPiece(PLUGINID, "knight", Knight);
+	engine.registerPiece(PLUGINID, "bishop", Bishop);
+	engine.registerPiece(PLUGINID, "queen", Queen);
+	engine.registerPiece(PLUGINID, "king", King);
+});
 
 interface PromotionTile extends Tile {
 	canPromoteHere?: boolean
@@ -10,26 +19,26 @@ interface PawnConstructorOptions extends PieceConstructorOptions {
 	enPassantTarget?: number
 }
 
-@YggdrasilEngine.registerPiece(MODID, "pawn")
 class Pawn extends Piece {
-	static promotions: Map<new (options?: PieceConstructorOptions) => Piece, PieceConstructorOptions> = new Map();
+	static promotions: Map<typeof Piece, PieceConstructorOptions> = new Map();
 
 	/** The last rank this pawn was on if it just took its first move. Otherwise, -1 */
 	enPassantTarget: number;
 
-	constructor(options?: PawnConstructorOptions) {
-		super({name: "Pawn", ...options});
+	constructor(engine: YggdrasilEngine, options?: PawnConstructorOptions) {
+		super(engine, {name: "Pawn", ...options});
 		this.enPassantTarget = options?.enPassantTarget ?? -1;
+		engine.subscribeEvent(YggdrasilEngine.Events.HalfTurnEnd, this.onEndHalfTurn.bind(this));
 	}
 
 	static promotion(propsAfterPromotion?: PawnConstructorOptions) {
-		return function decorator<This extends new (options?: PieceConstructorOptions) => Piece>(target: This, context: ClassDecoratorContext<This>) {
+		return function decorator<This extends typeof Piece>(target: This, context: ClassDecoratorContext<This>) {
 			Pawn.promotions.set(target, propsAfterPromotion || {});
 		}
 	}
 
 	clone(board: Board) {
-		const copy = super.clone(board);
+		const copy = super.clone(board) as Pawn;
 		copy.enPassantTarget = this.enPassantTarget;
 		return copy;
 	}
@@ -81,15 +90,14 @@ class Pawn extends Piece {
 			if (!(this.board.get(farthestMove?.toPos ?? this.pos) as PromotionTile)?.canPromoteHere) continue;
 			allMoves.splice(i, 1, ...[...Pawn.promotions.entries()].map(entry => {
 				const moveCopy = [...halfTurn];
-				const promotion = new entry[0]({board: this.board, hasMoved: true, isWhite: this.isWhite, ...entry[1]});
-				moveCopy.splice(farthestMoveIndex, 1, new Move({pieceNamespace: YggdrasilEngine.getNamespace(promotion) || "", spawnAtPos: farthestMove.toPos || this.pos, spawnProps: {board: this.board, hasMoved: true, isWhite: this.isWhite, name: this.name === "Pawn" ? `${promotion.name} (Promoted Pawn)` : this.name, ...entry[1]}, removeAtPos: farthestMove.fromPos}));
+				const promotion = new entry[0](this.engine, {board: this.board, hasMoved: true, isWhite: this.isWhite, ...entry[1]});
+				moveCopy.splice(farthestMoveIndex, 1, new Move({pieceNamespace: this.engine.getNamespace(promotion) || "", spawnAtPos: farthestMove.toPos || this.pos, spawnProps: {board: this.board, hasMoved: true, isWhite: this.isWhite, name: this.name === "Pawn" ? `${promotion.name} (Promoted Pawn)` : this.name, ...entry[1]}, removeAtPos: farthestMove.fromPos}));
 				return moveCopy;
 			}));
 		}
 		return allMoves;
 	}
 
-	@YggdrasilEngine.subscribeEvent(YggdrasilEngine.Events.HalfTurnEnd)
 	onEndHalfTurn(halfTurn: Move[]) {
 		if (!this.hasMoved) return;
 		if (this.enPassantTarget > -1) this.enPassantTarget = -1;
@@ -99,11 +107,10 @@ class Pawn extends Piece {
 	}
 }
 
-@YggdrasilEngine.registerPiece(MODID, "rook")
 @Pawn.promotion()
 class Rook extends Piece {
-	constructor(options?: PieceConstructorOptions) {
-		super({name: "Rook", ...options});
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Rook", ...options});
 	}
 
 	@atom(1, 0, 0)
@@ -112,11 +119,10 @@ class Rook extends Piece {
 	}
 }
 
-@YggdrasilEngine.registerPiece(MODID, "knight")
 @Pawn.promotion()
 class Knight extends Piece {
-	constructor(options?: PieceConstructorOptions) {
-		super({name: "Knight", ...options});
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Knight", ...options});
 	}
 
 	@atom(1, 2)
@@ -125,11 +131,10 @@ class Knight extends Piece {
 	}
 }
 
-@YggdrasilEngine.registerPiece(MODID, "bishop")
 @Pawn.promotion()
 class Bishop extends Piece {
-	constructor(options?: PieceConstructorOptions) {
-		super({name: "Bishop", ...options});
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Bishop", ...options});
 	}
 
 	@atom(1, 1, 0)
@@ -138,11 +143,10 @@ class Bishop extends Piece {
 	}
 }
 
-@YggdrasilEngine.registerPiece(MODID, "queen")
 @Pawn.promotion()
 class Queen extends Piece {
-	constructor(options?: PieceConstructorOptions) {
-		super({name: "Queen", ...options});
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Queen", ...options});
 	}
 
 	@atom(1, 0, 0)
@@ -152,10 +156,9 @@ class Queen extends Piece {
 	}
 }
 
-@YggdrasilEngine.registerPiece(MODID, "king")
 class King extends Piece {
-	constructor(options?: PieceConstructorOptions) {
-		super({name: "King", isRoyal: true, ...options});
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "King", isRoyal: true, ...options});
 	}
 
 	@atom(1, 0)

@@ -6,13 +6,13 @@ import { hrtime } from "node:process";
 import { REPLServer, start } from "node:repl";
 import { WebSocketServer, type WebSocket } from "ws";
 
-import * as Chess from "./yggdrasil.ts"; // Import all for repl use
+import * as Chess from "../engine/yggdrasil.ts"; // Import all for repl use
 const YggdrasilEngine = Chess.YggdrasilEngine;
 import Config from "./config.json" assert {type: "json"};
 
 let time = hrtime.bigint();
 let repl: REPLServer | undefined;
-let game = YggdrasilEngine.INSTANCE;
+let game: Chess.YggdrasilEngine;
 await reloadGame();
 
 const server = createServer((request, response) => {
@@ -50,8 +50,9 @@ wss.on("connection", ws => {
 				const moveOptions = game.board.get(new Chess.Pos(request?.[2]))?.piece?.getMoves().filter(moves => game.isLegal(moves));
 				moveOptions?.forEach(moves => moves.forEach(move => {
 					move.piece &&= move.piece.clone();
+					if (move.piece?.engine) (move.piece.engine as any) = undefined;
 					if (move.spawnProps?.board) move.spawnProps.board = undefined;
-					(move as any).serialized = move.serialize();
+					(move as any).serialized = move.serialize(game);
 				}));
 				ws.send(`moves ${JSON.stringify(moveOptions)}`);
 				break;
@@ -89,7 +90,8 @@ function sendState() {
 	if (!socket.INSTANCE) return;
 	const data = {board: new Chess.Board(), moves: game.state.moves.map(move => {
 		const copy = new Chess.Move({piece: move.piece?.clone(), pieceNamespace: move.pieceNamespace, fromPos: move.fromPos, toPos: move.toPos, removeAtPos: move.removeAtPos, captureAtPos: move.captureAtPos, spawnAtPos: move.spawnAtPos, spawnProps: move.spawnProps, dropAtPos: move.dropAtPos, canContinue: move.canContinue} as Chess.MoveDescriptor);
-		(copy as any).serialized = copy.serialize();
+		(copy as any).serialized = copy.serialize(game);
+		copy.piece = undefined;
 		return copy;
 	})};
 	for (let y = 0; y < game.board.height; y++) {
@@ -98,20 +100,21 @@ function sendState() {
 			data.board[y][x] = game.board[y][x].clone();
 			const piece = data.board[y][x].piece;
 			if (!piece) continue;
-			data.board[y][x].pieceNamespace = YggdrasilEngine.getNamespace(piece);
+			(piece.engine as any) = undefined;
+			data.board[y][x].pieceNamespace = game.getNamespace(piece);
 		}
 	}
-	socket.INSTANCE.send(`state ${JSON.stringify(data)}`);	
+	socket.INSTANCE.send(`state ${JSON.stringify(data)}`);
 }
 
 function reloadGame() {
 	console.log("\x1b[33mStarting \x1b[36mYggdrasil Engine\x1b[0m 🐲");
 	stopwatch();
-	return YggdrasilEngine.INSTANCE.load(Config).then(() => {
-		game = YggdrasilEngine.INSTANCE;
+	game = new YggdrasilEngine();
+	return game.load(Config).then(() => {
 		if (repl) repl.context.game = game;
 		console.log(`- \x1b[33mProcessed Config File\x1b[0m [${stopwatch()} ms]`);
-		return open("./src/moves.txt").then(file => file.readFile()).then(data => data.toString());
+		return open("./src/server/moves.txt").then(file => file.readFile()).then(data => data.toString());
 	}).then(file => {
 		console.log(`- \x1b[33mLoaded Moves File\x1b[0m [${stopwatch()} ms]`);
 		time = hrtime.bigint();

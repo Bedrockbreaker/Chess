@@ -1,5 +1,7 @@
 import { YggdrasilEngine, Piece, type PieceConstructorOptions, Pos, Move } from "../yggdrasil.ts";
 
+YggdrasilEngine.Plugin("test", (engine: YggdrasilEngine) => engine.registerPiece("test", "test", Test));
+
 /**
  * OP Test Piece
  * - Universal Jumper
@@ -11,20 +13,12 @@ import { YggdrasilEngine, Piece, type PieceConstructorOptions, Pos, Move } from 
  * - // TODO: Can promote to any piece
  * - Can suicide
  */
-@YggdrasilEngine.registerPiece("test", "test")
 class Test extends Piece {
-
-	static promotions: (new (options?: PieceConstructorOptions) => Piece)[] = [];
 
 	foo = "bar";
 	
-	constructor(options?: PieceConstructorOptions) {
-		super({name: "Test Piece", isIron: true, ...options});
-	}
-
-	@YggdrasilEngine.subscribeEvent(YggdrasilEngine.Events.loadEnd)
-	static onLoad() {
-		Test.promotions.push(...YggdrasilEngine.pieceRegistry.values());
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Test Piece", isIron: true, ...options});
 	}
 
 	getMoves(halfTurnMoves?: Move[]): Move[][] {

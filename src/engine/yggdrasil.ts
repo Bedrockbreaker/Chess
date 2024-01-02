@@ -130,6 +130,7 @@ interface PieceConstructorOptions {
  * A generic piece to extend from
  */
 class Piece {
+	engine: YggdrasilEngine;
 	board: Board;
 	pos: Pos;
 
@@ -149,7 +150,8 @@ class Piece {
 		return this.pos.y;
 	}
 
-	constructor(options?: PieceConstructorOptions) {
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		this.engine = engine;
 		this.isWhite = options?.isWhite ?? true;
 		this.board = options?.board || new Board();
 		this.pos = options?.pos || new Pos(NaN, NaN);
@@ -160,14 +162,14 @@ class Piece {
 	}
 
 	clone(board?: Board) {
-		return new (this.constructor as (new (options?: PieceConstructorOptions) => this))({board: board, pos: this.pos, name: this.name, isWhite: this.isWhite, isRoyal: this.isRoyal, isIron: this.isIron, hasMoved: this.hasMoved});
+		return new (this.constructor as typeof Piece)(this.engine, {board: board, pos: this.pos, name: this.name, isWhite: this.isWhite, isRoyal: this.isRoyal, isIron: this.isIron, hasMoved: this.hasMoved});
 	}
 
 	/**
 	 * Return a JSON-compatible representation of this piece for serialization
 	 */
 	JSONify(): PieceConstructorOptions {
-		return {isWhite: this.isWhite, isRoyal: this.isRoyal, isIron: this.isIron, hasMoved: this.hasMoved};
+		return {isWhite: this.isWhite, name: this.name, isRoyal: this.isRoyal, isIron: this.isIron, hasMoved: this.hasMoved};
 	}
 
 	/**
@@ -334,9 +336,9 @@ class Move {
 		this.canContinue = options.canContinue || false;
 	}
 
-	serialize() {
+	serialize(engine: YggdrasilEngine) {
 		let ycin = "";
-		if (this.piece || this.pieceNamespace) ycin += `${this.pieceNamespace || YggdrasilEngine.getNamespace(this.piece)} `;
+		if (this.piece || this.pieceNamespace) ycin += `${this.pieceNamespace || engine.getNamespace(this.piece)} `;
 		if (this.fromPos && this.toPos) ycin += `-${this.fromPos.toHex()}${this.toPos.toHex()}`;
 		if (this.removeAtPos) ycin += `.${this.removeAtPos.toHex()}`;
 		if (this.captureAtPos) ycin += `x${this.captureAtPos.toHex()}`;
@@ -354,8 +356,7 @@ interface GameOptions {
 			piece: {id: string} & PieceConstructorOptions,
 			tile: TileConstructorOptions
 		}
-	},
-	halfTurn: number,
+	}
 	maxHalfTurns: number,
 	plugins: string[]
 }
@@ -370,20 +371,19 @@ enum Events {
  */
 class YggdrasilEngine {
 
-	static INSTANCE = new YggdrasilEngine();
-	
-	static pieceRegistry = new Map<string, new (options?: PieceConstructorOptions) => Piece>();
-	static namespaceRegistry = new Map<new (options: PieceConstructorOptions) => Piece, string>();
+	private static pluginEntryPoints = new Map<string, ((engine: YggdrasilEngine) => void)>();
 
 	static Events = Events;
 
-	static get eventBus() {
-		return YggdrasilEngine.INSTANCE.state.eventBus;
-	}
+	pieceRegistry = new Map<string, typeof Piece>();
+	namespaceRegistry = new Map<typeof Piece, string>();
 
-	stateStack: {board: Board, moves: Move[], prevStateHash: string, eventBus: Map<Events, ((...Args: any[]) => void)[]>}[] = [];
-
+	stateStack: {board: Board, moves: Move[], isWhiteTurn: boolean, prevStateHash: string, eventBus: Map<Events, ((...Args: any[]) => void)[]>}[] = [];
 	isLoaded = false;
+
+	static Plugin<This extends (engine: YggdrasilEngine) => void>(pluginId: string, target: This) {
+		YggdrasilEngine.pluginEntryPoints.set(pluginId, target);
+	}
 
 	get state() {
 		return this.stateStack[this.stateStack.length-1];
@@ -397,48 +397,31 @@ class YggdrasilEngine {
 		return this.state.board;
 	}
 
+	get isWhiteTurn() {
+		return this.state.isWhiteTurn;
+	}
+
 	get pieces() {
 		// TODO: add pieces from players' hands
 		return this.board.flat().map(tile => tile.piece).filter(piece => piece);
 	}
 
 	constructor() {
-		this.stateStack.push({board: new Board(), moves: [], prevStateHash: "", eventBus: new Map()});
-	}
-
-	static registerPiece(modId: string, registryName: string) {
-		return function decorator<This extends new (options?: PieceConstructorOptions) => Piece>(target: This, context: ClassDecoratorContext<This>) {
-			YggdrasilEngine.pieceRegistry.set(`${modId}:${registryName}`, target);
-			YggdrasilEngine.namespaceRegistry.set(target, `${modId}:${registryName}`);
-		}
-	}
-
-	static subscribeEvent(eventName: Events) {
-		return function decorator<This, Args>(target: (this: This, ...args: Args[]) => void, context: ClassMethodDecoratorContext<This, (this: This, ...args: Args[]) => void>) {
-			context.addInitializer(function (this: any) {
-				target = this[context.name].bind(this);
-				if (!YggdrasilEngine.eventBus.has(eventName)) YggdrasilEngine.eventBus.set(eventName, []);
-				YggdrasilEngine.eventBus.get(eventName)?.push(target);
-			});
-		}
-	}
-
-	static getNamespace(piece?: Piece) {
-		return YggdrasilEngine.namespaceRegistry.get(piece?.constructor as new (options: PieceConstructorOptions) => Piece);
+		this.stateStack.push({board: new Board(), isWhiteTurn: true, moves: [], prevStateHash: "", eventBus: new Map()});
 	}
 
 	async load(config: GameOptions) {
-		if (this.isLoaded) {
-			YggdrasilEngine.INSTANCE = new YggdrasilEngine();
-			await YggdrasilEngine.INSTANCE.load(config);
-			return;
-		}
+		if (this.isLoaded) throw new Error("This instance of YggdrasilEngine has already been loaded");
 
 		const loadQueue: Promise<NodeModule>[] = [];
 		config.plugins.forEach(plugin => {
 			loadQueue.push(import(`./plugins/${plugin}.ts`));
 		});
 		await Promise.all(loadQueue);
+
+		YggdrasilEngine.pluginEntryPoints.forEach((loadFunc, pluginId) => {
+			if (config.plugins.includes(pluginId)) loadFunc(this);
+		});
 
 		const keys = Object.keys(config.key);
 		for (let y = 0; y < config.board.length; y++) {
@@ -448,9 +431,9 @@ class YggdrasilEngine {
 				const data = config.key[bothKeysDefined ? key : keys.find(key2 => key2.toLowerCase() === key.toLowerCase()) || ""];
 				let piece: Piece | undefined = undefined;
 				if (data.piece.id) {
-					const pieceClass = YggdrasilEngine.pieceRegistry.get(data.piece.id);
+					const pieceClass = this.pieceRegistry.get(data.piece.id);
 					if (!pieceClass) throw new Error(`No such piece exists: "${data.piece.id}"`);
-					piece = new pieceClass({board: this.board, isWhite: bothKeysDefined ? undefined : key === key.toLowerCase(), pos: new Pos(x, y), ...data.piece});
+					piece = new pieceClass(this, {board: this.board, isWhite: bothKeysDefined ? undefined : key === key.toLowerCase(), pos: new Pos(x, y), ...data.piece});
 				}
 				const tile = new Tile({pos: new Pos(x, y), piece: piece, ...data.tile});
 				this.board[y][x] = tile;
@@ -461,6 +444,24 @@ class YggdrasilEngine {
 		this.emitEvent(Events.loadEnd);
 	}
 
+	registerPiece<pieceClass extends typeof Piece>(pluginId: string, registryName: string, target: pieceClass) {
+		this.pieceRegistry.set(`${pluginId}:${registryName}`, target);
+		this.namespaceRegistry.set(target, `${pluginId}:${registryName}`);
+	}
+
+	getNamespace(piece?: Piece) {
+		return this.namespaceRegistry.get(piece?.constructor as new (options: PieceConstructorOptions) => Piece);
+	}
+
+	subscribeEvent(eventName: Events.loadEnd, target: () => void): void
+	subscribeEvent(eventName: Events.HalfTurnEnd, target: (halfTurn: Move[]) => void): void
+	subscribeEvent<Args>(eventName: Events, target: (...args: Args[]) => void) {
+		if (!this.eventBus.has(eventName)) this.eventBus.set(eventName, []);
+		this.eventBus.get(eventName)!.push(target);
+	}
+
+	emitEvent(event: Events.loadEnd): void
+	emitEvent(event: Events.HalfTurnEnd, halfTurnMoves: Move[]): void
 	emitEvent<Args>(event: Events, ...args: Args[]) {
 		this.eventBus.get(event)?.forEach(listener => listener(...args));
 	}
@@ -473,6 +474,8 @@ class YggdrasilEngine {
 		if (!this.isLegal(moves)) throw new Error("Move would result in an illegal board state");
 		this.forceMove(moves);
 		// TODO: check end of game (stalemates, checkmates)
+		// TODO: check halfTurn limit (number of moves made without pawn movement or capturing)
+		// TODO: check three-fold repetition
 	}
 
 	/**
@@ -485,9 +488,11 @@ class YggdrasilEngine {
 		for (let i = 0; i < moves.length; i++) {
 			const move = moves[i];
 			halfTurn.push(move);
+			// TODO: check moving other player's pieces
 			if (move.canContinue && i < moves.length - 1) continue;
 			this.forceMove(halfTurn);
-			// TODO: check legality
+			// TODO: check putting own king in check
+			// TODO: check not taking king out of check
 			halfTurn = [];
 			halfTurns++;
 		}
@@ -500,7 +505,7 @@ class YggdrasilEngine {
 	 */
 	forceMove(moves: Move[]) {
 		if (moves.length === 0) return;
-		this.stateStack.push({board: new Board(), moves: [...this.state.moves], prevStateHash: this.hashState(), eventBus: new Map()});
+		this.stateStack.push({board: new Board(), isWhiteTurn: !this.isWhiteTurn, moves: [...this.state.moves], prevStateHash: this.hashState(), eventBus: new Map()});
 		this.state.board = this.stateStack[this.stateStack.length-2].board.clone(); // Clone the board after pushing to the stack, so that event handlers are registered properly.
 
 		let halfTurn: Move[] = [];
@@ -511,7 +516,7 @@ class YggdrasilEngine {
 			let piece = this.board.get(move.fromPos || new Pos())?.piece;
 			if (!piece && move.pieceNamespace) {
 				const testPiece = this.board.get(move.fromPos || new Pos())?.piece;
-				if (testPiece && move.pieceNamespace === YggdrasilEngine.getNamespace(testPiece)) piece = testPiece;
+				if (testPiece && move.pieceNamespace === this.getNamespace(testPiece)) piece = testPiece;
 			}
 			move.piece = piece;
 
@@ -528,15 +533,15 @@ class YggdrasilEngine {
 				}
 			}
 			if (!piece && move.pieceNamespace && move.spawnAtPos) {
-				const pieceClass = YggdrasilEngine.pieceRegistry.get(move.pieceNamespace);
+				const pieceClass = this.pieceRegistry.get(move.pieceNamespace);
 				const tile = this.board.get(move.spawnAtPos);
 				if (pieceClass && tile) {
-					piece = new pieceClass({board: this.board, pos: move.spawnAtPos, ...(move.spawnProps || {})});
+					piece = new pieceClass(this, {board: this.board, pos: move.spawnAtPos, ...(move.spawnProps || {})});
 					tile.piece = piece;
 				}
 			}
 			if (!piece && move.pieceNamespace && move.dropAtPos) {
-				piece = new Piece(); // TODO: splice piece from player hands
+				piece = new Piece(this); // TODO: splice piece from player hands
 				const tile = this.board.get(move.dropAtPos);
 				if (piece && tile) tile.piece = piece;
 			}
@@ -594,7 +599,7 @@ class YggdrasilEngine {
 				const singleMove = halfTurnMoves[j];
 				
 				const pieceNamespace = namespaceRegex.exec(singleMove)?.[1];
-				if (pieceNamespace && !YggdrasilEngine.pieceRegistry.has(pieceNamespace)) console.warn(`Warning: No such piece exists: ${pieceNamespace}`);
+				if (pieceNamespace && !this.pieceRegistry.has(pieceNamespace)) console.warn(`Warning: No such piece exists: ${pieceNamespace}`);
 
 				const fromToPos = fromToPosRegex.exec(singleMove)?.[1];
 				const fromPos = new Pos(fromToPos?.slice(0, 8));

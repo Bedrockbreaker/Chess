@@ -112,7 +112,7 @@ body::-webkit-scrollbar {
 }
 
 #potentialMoves > code {
-	max-width: 390px;
+	max-width: 380px;
 	height: fit-content;
 	background-color: #313131;
 	border-radius: 5px;

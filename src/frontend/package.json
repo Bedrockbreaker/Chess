@@ -1,0 +1,31 @@
+{
+	"name": "frontend",
+	"version": "0.2.0",
+	"description": "",
+	"main": "frontend.tsx",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+		"build": "tsc && vite build",
+		"preview": "tsc && vite build && vite preview"
+	},
+	"author": "Bedrockbreaker",
+	"license": "MIT",
+	"dependencies": {
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0"
+	},
+	"devDependencies": {
+		"@types/react": "^18.2.46",
+		"@types/react-dom": "^18.2.18",
+		"@typescript-eslint/eslint-plugin": "^6.17.0",
+		"@typescript-eslint/parser": "^6.17.0",
+		"@vitejs/plugin-react-swc": "^3.5.0",
+		"eslint": "^8.56.0",
+		"eslint-plugin-react": "^7.33.2",
+		"eslint-plugin-react-hooks": "^4.6.0",
+		"eslint-plugin-react-refresh": "^0.4.5",
+		"vite": "^5.0.10"
+	}
+}

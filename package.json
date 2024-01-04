@@ -3,20 +3,27 @@
 	"version": "0.1.0",
 	"description": "A chess engine designed to run as many variations of Fairy chess as possible.",
 	"main": "./src/main.ts",
+	"private": true,
 	"type": "module",
 	"author": "Bedrockbreaker",
 	"license": "MIT",
+	"scripts": {
+		"run": "node --no-warnings=ExperimentalWarning --loader ts-node/esm ./src/server/main.ts"
+	},
 	"devDependencies": {
 		"@types/mime": "^3.0.4",
 		"@types/node": "^20.10.5",
 		"@types/object-hash": "^3.0.6",
-		"@types/ws": "^8.5.10",
-		"typescript": "^5.3.3"
+		"@types/ws": "^8.5.10"
 	},
 	"dependencies": {
 		"mime": "^4.0.1",
 		"object-hash": "^3.0.0",
 		"ts-node": "^10.9.2",
+		"typescript": "^5.3.3",
 		"ws": "^8.15.1"
-	}
+	},
+	"workspaces": [
+		"src/frontend"
+	]
 }

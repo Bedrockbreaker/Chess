@@ -1,32 +1,22 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"lib": ["DOM"],
-		"target": "ES2022",
-		"useDefineForClassFields": true,
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
 
-		"module": "CommonJS",
-		"moduleResolution": "Classic",
-		"allowImportingTsExtensions": false,
-		"resolveJsonModule": false,
-		
-		"noEmit": false,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"isolatedModules": true,
+		"jsx": "react-jsx",
+
 		"sourceMap": true,
 
 		"verbatimModuleSyntax": true,
 		"esModuleInterop": false,
 		"forceConsistentCasingInFileNames": true,
 
-		"strict": true,
-		"noImplicitAny": true,
-		"strictNullChecks": true,
-		"strictFunctionTypes": true,
-		"strictPropertyInitialization": true,
-		"noImplicitThis": true,
-		"useUnknownInCatchVariables": true,
-
 		"skipLibCheck": true
 	},
 	"include": ["./**/*"],
-	"exclude": []
+	"exclude": [],
+	"references": [{"path": "./tsconfig.node.json"}]
 }

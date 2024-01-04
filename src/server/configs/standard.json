@@ -18,7 +18,6 @@
 		"k": {"piece": {"id": "orthodox:king"}, "tile": {"canPromoteHere": true}},
 		"p": {"piece": {"id": "orthodox:pawn"}, "tile": {}}
 	},
-	"halfTurn": 0,
-	"maxHalfTurns": 60,
+	"maxHalfTurns": 100,
 	"plugins": ["orthodox"]
 }

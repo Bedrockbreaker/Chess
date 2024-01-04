@@ -1,54 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
-		<meta charset="UTF-8" />
-		<script src="./frontend.js"></script>
-		<link rel="stylesheet" href="./style.css"></script>
-		<title>YggdrasilEngine 🐲</title>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>Yggdrasil Frontend React Test</title>
 	</head>
 	<body>
-		<div id="container">
-			<canvas id="canvas" width="800px"></canvas>
-			<div id="gameMoves">
-				<div id="prevMove">
-					<div id="prevMoveEvalIcon"></div>
-					<div id="prevMoveMain">
-						<code>New Game</code>
-					</div>
-					<span id="prevMoveEval">+0.0</span>
-				</div>
-				<hr>
-				<div id="stateStack">
-					<ol id="stateStackList"></ol>
-				</div>
-			</div>
-			<div id="potentialMoves" class="hidden"></div>
-			<div id="pieceDisplay" class="hidden">
-				<svg width="130%" height="56" style="position: absolute;">
-					<mask id="semicircle">
-						<rect fill="white" x="0" y="0" width="100%" height="100%"></rect>
-						<circle fill="black" cx="58" cy="56" r="39"></circle>
-					</mask>
-				</svg>
-				<div id="pieceBanner"></div>
-				<div id="pieceHeader">
-					<img id="pieceIcon" width="32px" height="32px" />
-					<div id="pieceNames">
-						<span id="pieceName"></span>
-						<code id="pieceNamespace"></code>
-					</div>
-					<div id="pieceCoords">
-						<span id="pieceCartesianCoords"></span>
-						<code id="pieceHexCoords"></code>
-					</div>
-				</div>
-				<div id="pieceStats"></div>
-			</div>
-		</div>
-		<!-- Predownload Common Assets -->
-		<div style="display: none;">
-			<img src="assets/common/select.png">
-			<audio src="assets/common/wood_hit.wav" id="audioPlayer"></audio>
-		</div>
+		<div id="root"></div>
+		<script type="module" src="/components/index.tsx"></script>
 	</body>
 </html>

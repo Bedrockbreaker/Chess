@@ -26,9 +26,9 @@
 		"skipLibCheck": true,
 	},
 	"include": [
-		"src/**/*"
+		"./src/**/*"
 	],
 	"exclude": [
-		"src/frontend/**/*"
+		"./src/frontend/**/*"
 	]
 }

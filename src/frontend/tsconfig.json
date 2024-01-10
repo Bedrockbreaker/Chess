@@ -2,6 +2,7 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"types": ["vite/client"],
 
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
@@ -9,12 +10,8 @@
 		"jsx": "react-jsx",
 
 		"sourceMap": true,
-
-		"verbatimModuleSyntax": true,
-		"esModuleInterop": false,
-		"forceConsistentCasingInFileNames": true,
-
-		"skipLibCheck": true
+		
+		"esModuleInterop": false
 	},
 	"include": ["./**/*"],
 	"exclude": ["./dist"],

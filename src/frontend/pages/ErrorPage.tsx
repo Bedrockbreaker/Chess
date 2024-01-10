@@ -11,7 +11,7 @@ function ErrorPage() {
 	return (<div id="errorBody">
 		<h1>Oh heck.</h1>
 		<p>An unexpected error has occurred.</p>
-		<p className="errorMessage">{error instanceof Error ? error.message : `${error.status}: ${error.statusText}`}</p>
+		<p className="errorMessage">{error instanceof Error ? <>{error.message}<br/><br/>{error.stack}</> : `${error.status}: ${error.statusText}`}</p>
 		<NavLink to="/">Home</NavLink>
 	</div>)
 }

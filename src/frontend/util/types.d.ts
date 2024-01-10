@@ -12,7 +12,7 @@ declare type Piece = {
 	pos: Pos,
 	name: string,
 	isWhite: boolean,
-	[key: string]: string
+	[key: string]: any
 }
 
 declare type Move = {
@@ -33,4 +33,12 @@ declare type GameState = {
 	moves: Move[]
 }
 
-export { Pos, Tile, Piece, Move, GameState }
+declare type TileOverlays = {
+	movement?: boolean,
+	removal?: boolean,
+	capture?: boolean,
+	spawn?: boolean,
+	drop?: boolean
+}
+
+export { Pos, Tile, Piece, Move, GameState, TileOverlays }

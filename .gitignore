@@ -1,5 +1,3 @@
-/.vscode
-node_modules
-/reference
-/src/frontend/dist
-.env
+.vscode/
+legacy/
+.godot/

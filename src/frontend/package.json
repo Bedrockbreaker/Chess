@@ -1,8 +1,7 @@
 {
 	"name": "frontend",
 	"version": "0.2.0",
-	"description": "",
-	"main": "frontend.tsx",
+	"description": "Frontend website for Yggdrasil",
 	"type": "module",
 	"scripts": {
 		"dev": "vite --host",

@@ -1,4 +1,6 @@
-import { YggdrasilEngine, Piece, Pos, Tile, Board, Directions, atom, Move, type PieceConstructorOptions } from "../yggdrasil.ts"
+import { Directions, Modifiers } from "../../common/util.ts";
+import type { PieceConstructorOptions } from "../../common/server.d.ts";
+import { YggdrasilEngine, Piece, Pos, Tile, Board, atom, Move } from "../yggdrasil.ts"
 
 const PLUGINID = "orthodox";
 
@@ -11,23 +13,23 @@ YggdrasilEngine.Plugin(PLUGINID, (engine: YggdrasilEngine) => {
 	engine.registerPiece(PLUGINID, "king", King);
 });
 
-interface PromotionTile extends Tile {
+export interface PromotionTile extends Tile {
 	canPromoteHere?: boolean
 }
 
-interface PawnConstructorOptions extends PieceConstructorOptions {
-	enPassantTarget?: number
+export interface PawnConstructorOptions extends PieceConstructorOptions {
+	enPassantTarget?: {x: number, y: number}
 }
 
-class Pawn extends Piece {
+export class Pawn extends Piece {
 	static promotions: Map<typeof Piece, PieceConstructorOptions> = new Map();
 
-	/** The last rank this pawn was on if it just took its first move. Otherwise, -1 */
-	enPassantTarget: number;
+	/** The last pos this pawn was on if it just took its first move */
+	enPassantTarget: Pos;
 
 	constructor(engine: YggdrasilEngine, options?: PawnConstructorOptions) {
 		super(engine, {name: "Pawn", ...options});
-		this.enPassantTarget = options?.enPassantTarget ?? -1;
+		this.enPassantTarget = options?.enPassantTarget ? new Pos(options.enPassantTarget.x, options.enPassantTarget.y) : new Pos();
 		engine.subscribeEvent(YggdrasilEngine.Events.HalfTurnEnd, this.onEndHalfTurn.bind(this));
 	}
 
@@ -43,38 +45,41 @@ class Pawn extends Piece {
 		return copy;
 	}
 
-	JSONify() {
-		return {...super.JSONify(), enPassantTarget: this.enPassantTarget};
+	package() {
+		return {...super.package(), enPassantTarget: this.enPassantTarget}
 	}
 
-	@atom(1, 1, 1, [Directions.Forward], true, (piece, newMoves, oldMoves, allMoves) => piece.getPromotions(allMoves)) // Diagonal capture + promotions
-	@atom(1, 0, 2, [Directions.Forward], false, (piece, newMoves, oldMoves) => [...oldMoves, ...newMoves.slice(0, piece.hasMoved && newMoves.length > 1 ? 1 : undefined)]) // Single + Double push
+	@atom({x: 1, y: 1, directions: [Directions.Forward], modifiers: [Modifiers.Capture], callback: (piece, newMoves, oldMoves, allMoves) => piece.getPromotions(allMoves)}) // Diagonal capture + promotions
+	@atom({x: 1, y: 0, directions: [Directions.Forward], modifiers: [Modifiers.NonCapture], callback: (piece, newMoves, oldMoves) => [...oldMoves, ...newMoves.slice(0, piece.hasMoved && newMoves.length > 1 ? 1 : undefined)]}) // Diagonal capture + promotions
 	getMoves(halfTurnMoves?: Move[]): Move[][] {
 		// En passant
 		const moves: Move[][] = [];
 		const tileLF = this.getRelTile(new Pos(-1, 1));
-		// TODO: iterate over the L/R files to support arbitrary en passant lengths
-		const pieceL = this.board.get(new Pos(this.x + (this.isWhite ? -1 : 1), this.y))?.piece;
 		const tileRF = this.getRelTile(new Pos(1, 1));
-		const pieceR = this.board.get(new Pos(this.x + (this.isWhite ? 1 : -1), this.y))?.piece;
-		if (
-			tileLF && (!tileLF?.piece || tileLF.piece.isCapturableBy(this))
-			&& pieceL instanceof Pawn && pieceL.isCapturableBy(this) && pieceL.enPassantTarget !== -1
-			&& (this.isWhite ? (pieceL.enPassantTarget <= this.y - 2 && pieceL.y >= this.y) : (pieceL.enPassantTarget >= this.y + 2 && pieceL.y <= this.y))
-		) {
-			const enPassant = [new Move({piece: this, fromPos: this.pos, toPos: tileLF.pos, captureAtPos: pieceL.pos})];
-			if (tileLF.piece) enPassant.push(new Move({piece: this, captureAtPos: tileLF.pos}));
-			moves.push(enPassant);
+
+		// Q: "Why would there ever be multiple?" A: ¯\_(ツ)_/¯
+		const potentialTargets = this.engine.pieces.filter(piece => piece instanceof Pawn && piece.enPassantTarget.isValid() && piece.isCapturableBy(this)) as Pawn[];
+		for (const target of potentialTargets) {
+			// Construct a line through the end positions of the target's movement.
+			const m = Pos.sub(target.pos, target.enPassantTarget);
+			const line = (pos: Pos) => m.x*(pos.y - target.pos.y) - m.y*(pos.x - target.pos.x);
+			// Scaled distance to perpendicular bisector
+			const distance = (pos: Pos) => Math.abs(m.y*(pos.y - (target.enPassantTarget.y + target.pos.y)/2) - m.x*(pos.x - (target.enPassantTarget.x + target.pos.x)/2));
+			const distanceMax = distance(target.pos);
+			
+			// If a diagonal move lies on the line and is within the max distance of the perpendicular bisector, it is an en passant.
+			if (tileLF && line(tileLF.pos) === 0 && distance(tileLF.pos) < distanceMax) {
+				const enPassant = [new Move({piece: this, fromPos: this.pos, toPos: tileLF.pos, captureAtPos: target.pos})];
+				if (tileLF.piece && tileLF.piece.isCapturableBy(this)) enPassant.push(new Move({piece: this, captureAtPos: tileLF.pos}));
+				moves.push(enPassant);
+			}
+			if (tileRF && line(tileRF.pos) === 0 && distance(tileRF.pos) < distanceMax) {
+				const enPassant = [new Move({piece: this, fromPos: this.pos, toPos: tileRF.pos, captureAtPos: target.pos})];
+				if (tileRF.piece && tileRF.piece.isCapturableBy(this)) enPassant.push(new Move({piece: this, captureAtPos: tileRF.pos}));
+				moves.push(enPassant);
+			}
 		}
-		if (
-			tileRF && (!tileRF?.piece || tileRF.piece.isCapturableBy(this))
-			&& pieceR instanceof Pawn && pieceR.isCapturableBy(this) && pieceR.enPassantTarget !== -1
-			&& (this.isWhite ? (pieceR.enPassantTarget <= this.y - 2 && pieceR.y >= this.y) : (pieceR.enPassantTarget >= this.y + 2 && pieceR.y <= this.y))
-		) {
-			const enPassant = [new Move({piece: this, fromPos: this.pos, toPos: tileRF.pos, captureAtPos: pieceR.pos})];
-			if (tileRF.piece) enPassant.push(new Move({piece: this, captureAtPos: tileRF.pos}));
-			moves.push(enPassant);
-		}
+		
 		return moves;
 	}
 
@@ -90,8 +95,8 @@ class Pawn extends Piece {
 			if (!(this.board.get(farthestMove?.toPos ?? this.pos) as PromotionTile)?.canPromoteHere) continue;
 			allMoves.splice(i, 1, ...[...Pawn.promotions.entries()].map(entry => {
 				const moveCopy = [...halfTurn];
-				const promotion = new entry[0](this.engine, {board: this.board, hasMoved: true, isWhite: this.isWhite, ...entry[1]});
-				moveCopy.splice(farthestMoveIndex, 1, new Move({pieceNamespace: this.engine.getNamespace(promotion) || "", spawnAtPos: farthestMove.toPos || this.pos, spawnProps: {board: this.board, hasMoved: true, isWhite: this.isWhite, name: this.name === "Pawn" ? `${promotion.name} (Promoted Pawn)` : this.name, ...entry[1]}, removeAtPos: farthestMove.fromPos}));
+				const promotion = new entry[0](this.engine, {board: this.board, hasMoved: true, faction: this.faction, forwards: this.forwards, ...entry[1]});
+				moveCopy.splice(farthestMoveIndex, 1, new Move({pieceNamespace: promotion.namespace, spawnAtPos: farthestMove.toPos || this.pos, spawnProps: {board: this.board, hasMoved: true, faction: this.faction, forwards: this.forwards, name: this.name === "Pawn" ? `${promotion.name} (Promoted Pawn)` : this.name, ...entry[1]}, removeAtPos: farthestMove.fromPos}));
 				return moveCopy;
 			}));
 		}
@@ -100,69 +105,28 @@ class Pawn extends Piece {
 
 	onEndHalfTurn(halfTurn: Move[]) {
 		if (!this.hasMoved) return;
-		if (this.enPassantTarget > -1) this.enPassantTarget = -1;
+		if (this.enPassantTarget.isValid()) this.enPassantTarget = new Pos();
 		const thisLastPos = halfTurn.findLast(move => move.piece === this)?.fromPos;
 		if (!thisLastPos || !thisLastPos.isValid()) return;
-		if (Math.abs(Pos.sub(this.pos, thisLastPos).y) > 1) this.enPassantTarget = thisLastPos.y;
+		// BUG: diagonal captures will be registered as en passant moves
+		if (Math.abs(this.pos.x - thisLastPos.x) + Math.abs(this.pos.y - thisLastPos.y) > 1) this.enPassantTarget = thisLastPos;
 	}
 }
 
-@Pawn.promotion()
-class Rook extends Piece {
-	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
-		super(engine, {name: "Rook", ...options});
-	}
+export class King extends Piece {
 
-	@atom(1, 0, 0)
-	getMoves(halfTurnMoves?: Move[]): Move[][] {
-		return [];
-	}
-}
+	static castlers = new Set<typeof Piece>();
 
-@Pawn.promotion()
-class Knight extends Piece {
-	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
-		super(engine, {name: "Knight", ...options});
-	}
-
-	@atom(1, 2)
-	getMoves(halfTurnMoves?: Move[]): Move[][] {
-		return [];
-	}
-}
-
-@Pawn.promotion()
-class Bishop extends Piece {
-	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
-		super(engine, {name: "Bishop", ...options});
-	}
-
-	@atom(1, 1, 0)
-	getMoves(halfTurnMoves?: Move[]): Move[][] {
-		return [];
-	}
-}
-
-@Pawn.promotion()
-class Queen extends Piece {
-	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
-		super(engine, {name: "Queen", ...options});
-	}
-
-	@atom(1, 0, 0)
-	@atom(1, 1, 0)
-	getMoves(halfTurnMoves?: Move[]): Move[][] {
-		return [];
-	}
-}
-
-class King extends Piece {
 	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
 		super(engine, {name: "King", isRoyal: true, ...options});
 	}
 
-	@atom(1, 0)
-	@atom(1, 1)
+	static castleable<This extends typeof Piece>(target: This, context: ClassDecoratorContext<This>) {
+		King.castlers.add(target);
+	}
+
+	@atom({x: 1, y: 0})
+	@atom({x: 1, y: 1})
 	getMoves(halfTurnMoves?: Move[]): Move[][] {
 		// Castling
 		const moves: Move[][] = [];
@@ -179,7 +143,7 @@ class King extends Piece {
 				const piece = tile.piece;
 				// TODO: check if pos is under attack and stop exploration
 				if (!piece) continue;
-				if (!(piece instanceof Rook) || piece.hasMoved || piece.isWhite !== this.isWhite) { // TODO: use decoration to instead mark castleable pieces
+				if (!King.castlers.has(piece.constructor as typeof Piece) || piece.hasMoved || piece.faction !== this.faction) {
 					x.splice(i, 1);
 					continue;
 				}
@@ -194,4 +158,52 @@ class King extends Piece {
 	}
 }
 
-export { Rook, Knight, Bishop, Queen, King, Pawn, type PawnConstructorOptions, type PromotionTile }
+@Pawn.promotion()
+@King.castleable
+export class Rook extends Piece {
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Rook", ...options});
+	}
+
+	@atom({x: 1, y: 0, range: 0})
+	getMoves(halfTurnMoves?: Move[]): Move[][] {
+		return [];
+	}
+}
+
+@Pawn.promotion()
+export class Knight extends Piece {
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Knight", ...options});
+	}
+
+	@atom({x: 1, y: 2})
+	getMoves(halfTurnMoves?: Move[] | undefined): Move[][] {
+		return [];
+	}
+}
+
+@Pawn.promotion()
+export class Bishop extends Piece {
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Bishop", ...options});
+	}
+
+	@atom({x: 1, y: 1, range: 0})
+	getMoves(halfTurnMoves?: Move[]): Move[][] {
+		return [];
+	}
+}
+
+@Pawn.promotion()
+export class Queen extends Piece {
+	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
+		super(engine, {name: "Queen", ...options});
+	}
+
+	@atom({x: 1, y: 0, range: 0})
+	@atom({x: 1, y: 1, range: 0})
+	getMoves(halfTurnMoves?: Move[]): Move[][] {
+		return [];
+	}
+}

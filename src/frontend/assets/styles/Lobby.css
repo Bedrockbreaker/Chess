@@ -1,0 +1,560 @@
+#lobby {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	justify-content: center;
+	align-items: center;
+}
+
+#lobby input:not([type="range"]), #lobby button {
+	padding: .5rem;
+	background-color: #313131;
+	border: 2px solid #1F1F1F;
+	border-radius: 5px;
+	color: #FFFFFF;
+}
+
+#lobby input:hover:not([type="range"]) {
+	border: 2px solid #0078D4;
+}
+
+#lobby div.container {
+	display: flex;
+	flex-direction: column;
+	width: 60%;
+	height: 100%;
+	padding: 1rem;
+	gap: 1rem;
+}
+
+#lobby input.editable {
+	background: url("../svg/pencil.svg") calc(100% - .5rem) center / 1rem 1rem no-repeat;
+	padding-right: 2rem;
+}
+
+#lobby input#usernameInput {
+	width: 100%;
+}
+
+#lobby div.tabbedArea {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+#lobby div.tabs button {
+	border-radius: 5px 5px 0px 0px;
+	border-bottom: none;
+}
+
+#lobby div.tabs button:hover {
+	border: 2px solid #0078D4;
+	border-bottom: none;
+}
+
+#lobby div.tabs button.active {
+	background-color: #1F1F1F;
+}
+
+#lobby div.tabContent {
+	position: relative;
+	height: 100%;
+	overflow: hidden;
+	border: 2px solid #1F1F1F;
+	border-radius: 0px 5px 5px 5px;
+}
+
+#lobby div.joinArea {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	transition: transform .3s ease;
+}
+
+#lobby div.joinArea.hidden {
+	transform: translate(-100%, 0%);
+}
+
+#lobby div.filterBar {
+	display: flex;
+	flex-direction: column;
+	padding: .5rem;
+	background-color: #1F1F1F;
+}
+
+#lobby div.filterBar form {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: .5rem;
+}
+
+#lobby input.roomSearch {
+	width: 100%;
+	height: fit-content;
+	padding-right: 2rem;
+	background: 
+		url("../svg/magnifying_glass.svg") calc(100% - .5rem) center / 1rem 1rem no-repeat,
+		#313131;
+}
+
+#lobby div.inputWithCheckbox {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	width: calc(50% - .25rem);
+	column-gap: 2px;
+}
+
+#lobby div.pluginFilter {
+	display: inline-block;
+	width: 100%;
+}
+
+#lobby div.pluginFilter__control, #lobby div.pluginFilter__menu {
+	background-color: #313131;
+	color: #FFFFFF;
+}
+
+#lobby div.pluginFilter__control {
+	min-height: 39px;
+	border: 2px solid #1F1F1F;
+	border-radius: 5px;
+	transition: border 0s;
+}
+
+#lobby div.pluginFilter__control:not(.pluginFilter__control--is-focused):hover {
+	border: 2px solid #0078D4;
+}
+
+#lobby div.pluginFilter__control--is-focused {
+	box-shadow: 0px 0px 0px 1px #FFFFFF;
+}
+
+#lobby div.pluginFilter__multi-value {
+	background-color: #0078D4;
+}
+
+#lobby div.pluginFilter__multi-value__label, #lobby div.pluginFilter__input-container, #lobby div.pluginFilter__indicator:hover {
+	color: #FFFFFF;
+}
+
+#lobby div.pluginFilter__multi-value__remove:hover {
+	border-radius: 0px 2px 2px 0px;
+}
+
+#lobby div.pluginFilter__indicator {
+	padding: 7px;
+}
+
+#lobby div.pluginFilter__option--is-focused{
+	background-color: #1F1F1F;
+}
+
+#lobby div.controlContainer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+#lobby div.rangeContainer {
+	background-color: #313131;
+	border: 2px solid #1F1F1F;
+	border-radius: 5px;
+}
+
+#lobby div.rangeContainer div.valueDisplay input {
+	padding: 0px;
+	background-color: transparent;
+	border: none;
+	color: #FFFFFF;
+}
+
+#lobby div.settingsMenu {
+	position: relative;
+	align-self: self-end;
+}
+
+#lobby div.settingsMenu > button {
+	height: 1.75rem;
+	padding: .25rem;
+}
+
+#lobby div.settingsMenu > button:hover {
+	border: 2px solid #0078D4;
+}
+
+#lobby div.settingsDropdown {
+	position: absolute;
+	top: 2rem;
+	right: 2px;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: .25rem;
+	width: max-content;
+	padding: .5rem;
+	background-color: #1F1F1F;
+	border: 2px solid #0078D4;
+	border-radius: 5px;
+	user-select: none;
+}
+
+#lobby div.settingsDropdown::before {
+	content: "";
+	position: absolute;
+	top: 0px;
+	right: 11px;
+	width: 1rem;
+	height: .5rem;
+	transform: translate(50%, -100%);
+	background-color: #0078D4;
+	clip-path: polygon(0% 100%, 50% 0%, 100% 100%);
+}
+
+#lobby div.settingsMenu div.columnLabel {
+	gap: 2px;
+	padding: .25rem;
+	background-color: #313131;
+	border-radius: 5px;
+}
+
+#lobby div.settingsMenu input {
+	background-color: #1F1F1F;
+}
+
+#lobby div.settingsMenu label {
+	flex-grow: 1;
+}
+
+#lobby div.settingsMenu div.vertical {
+	height: 1rem;
+	margin-left: .25rem;
+	border-right: 1px solid #9B9B9B;
+}
+
+#lobby div.settingsDropdown img.dndHandle {
+	cursor: grab;
+}
+
+#lobby div.settingsDropdown div.columnLabel.held {
+	opacity: 0%;
+}
+
+#lobby div.settingsDropdown div.columnLabel.target > * {
+	pointer-events: none;
+}
+
+#lobby div.columnLabelDragLayer {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 100;
+	pointer-events: none;
+}
+
+#lobby div.columnLabelDragLayer > div {
+	display: flex;
+	flex-direction: row;
+}
+
+#lobby div.columnLabelDragLayer div.columnLabel {
+	width: 100%;
+	outline: 2px solid #1F1F1F;
+}
+
+#lobby div.tableContainer {
+	display: flex;
+	flex-grow: 1;
+	justify-content: safe center;
+	width: 100%;
+	overflow: auto hidden;
+}
+
+#lobby div.tableContainer::-webkit-scrollbar {
+	height: 8px;
+}
+
+#lobby div.tableContainer::-webkit-scrollbar-thumb {
+	background-color: #0078D4;
+	border-radius: 4px;
+}
+
+#table {
+	width: max-content;
+	min-width: 100%;
+}
+
+#table .thead {
+	position: relative;
+}
+
+#table .tr {
+	display: flex;
+	flex-direction: row;
+	width: max-content;
+	min-width: 100%;
+}
+
+#table .th, #table .td {
+	overflow: hidden;
+	text-wrap: nowrap;
+	text-overflow: ellipsis;
+}
+
+#table .th:last-child, #table .td:last-child {
+	flex-grow: 1;
+}
+
+#table .th {
+	position: relative;
+	display: flex;
+	background-color: #1F1F1F;
+	user-select: none;
+	align-items: center;
+	justify-content: center;
+}
+
+#table .th button {
+	padding: 0px;
+	background-color: transparent;
+	width: 100%;
+	height: 100%;
+	border: none;
+	border-radius: 0px;
+}
+
+#table .th > button {
+	cursor: pointer;
+}
+
+#table .th img.sortingIcon {
+	height: .75rem;
+}
+
+#table .th div.resizeHandle {
+	position: absolute;
+	right: 0px;
+	width: .25rem;
+	height: 100%;
+	background-color: #0078D4;
+}
+
+#table .th div.resizeHandle > button {
+	cursor: col-resize;
+}
+
+#table .tbody {
+	position: relative;
+}
+
+#table .tbody.loading::before {
+	content: "";
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background-color: transparent;
+	animation: .5s ease .75s forwards overlay;
+}
+
+@keyframes overlay {
+	0% {
+		background-color: transparent;
+	}
+	100% {
+		background-color: #31313177;
+	}
+}
+
+#table .tbody .tr {
+	height: 1.5rem;
+	cursor: pointer;
+}
+
+#table .tbody .tr:nth-child(even) {
+	background-color: #1F1F1F;
+}
+
+#table .tbody .tr:hover {
+	outline: 2px solid #0078D4;
+}
+
+#table div.stoplight {
+	width: 0px;
+	height: 0px;
+	margin: 8px auto;
+	border-width: .25rem;
+	border-style: solid;
+	border-radius: 50%;
+}
+
+#lobby div.green {
+	border-color: #0078D4;
+}
+
+#lobby div.yellow {
+	border-color: #FBF236;
+}
+
+#lobby div.red {
+	border-color: #D16969;
+}
+
+#lobby div.gray {
+	border-color: #9B9B9B;
+}
+
+#lobby div.tfoot {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	background-color: #1F1F1F;
+	padding: .25rem;
+}
+
+#lobby div.tfoot div.total {
+	flex-grow: 1;
+}
+
+#lobby div.tfoot div.pagination {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+#lobby div.tfoot button {
+	display: inline-flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	padding: .125rem;
+}
+
+#lobby div.tfoot button:hover {
+	border: 2px solid #0078D4;
+}
+
+#lobby div.tfoot input.pageInput {
+	padding: .125rem;
+}
+
+#lobby div.roomDetailsContainer {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	transition: transform .3s ease;
+}
+
+#lobby div.roomDetailsContainer.hidden {
+	transform: translate(100%, 0%);
+}
+
+#lobby div.roomDetails {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+#lobby div.roomHeader {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: .5rem;
+	background-color: #1F1F1F;
+}
+
+#lobby div.roomHeader h3 {
+	flex-grow: 1;
+}
+
+#lobby div.roomHeader img {
+	height: 2rem;
+}
+
+#lobby div.roomHeader button.back {
+	display: flex;
+	justify-content: center;
+	padding: 0px;
+	background-color: #1F1F1F;
+}
+
+#lobby div.roomHeader div.passwordInput {
+	display: flex;
+	flex-direction: row;
+	justify-content: end;
+	gap: .5rem;
+}
+
+#lobby div.roomHeader button.back:hover {
+	border: 2px solid #0078D4;
+}
+
+#lobby div.roomHeader button.join {
+	margin-right: .75rem;
+	background-color: #0078D4;
+	border: none;
+	cursor: pointer;
+}
+
+#lobby div.roomHeader div.statusBar {
+	width: 100%;
+	border-bottom-width: 2px;
+	border-style: solid;
+}
+
+#lobby div.roomInfo {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem;
+	background-color: #1F1F1F;
+	overflow-y: auto;
+}
+
+#lobby div.roomInfo h4 {
+	margin-block: 0px;
+}
+
+#lobby div.roomInfo div.info {
+	display: flex;
+	flex-direction: column;
+	padding: .5rem;
+	background-color: #313131;
+	border-radius: 5px;
+}
+
+#lobby div.roomInfo hr {
+	margin: auto 0px;
+}
+
+#lobby div.roomInfo div.info.row {
+	flex-direction: row;
+}
+
+#lobby div.roomInfo div.players > div {
+	display: flex;
+	flex-direction: row;
+}
+
+#lobby div.roomInfo div.players div.username {
+	flex-grow: 1;
+}
+
+@media (width <= 1024px) {
+	#lobby div.roomHeader div.passwordInput {
+		margin: 0px .75rem .75rem 0px;
+		width: 100%;
+	}
+}
+
+@media (width <= 768px) {
+	#lobby div.container {
+		width: 100%;
+	}
+}

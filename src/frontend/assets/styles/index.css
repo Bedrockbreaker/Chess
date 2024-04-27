@@ -7,6 +7,16 @@ html {
 	box-sizing: inherit;
 }
 
+*::-webkit-scrollbar, *::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+*::-webkit-scrollbar-thumb, *::-webkit-scrollbar-thumb {
+	background-color: #0078D4;
+	border-radius: 4px;
+}
+
 body {
 	margin: 0px;
 	height: 100%;
@@ -40,4 +50,22 @@ a {
 	font-size: 1rem;
 	color: #FFFFFF;
 	text-decoration: none;
+}
+
+button, input, select, textarea {
+	margin: 0px;
+	padding: 0px;
+	appearance: none;
+	font-family: inherit;
+	font-size: 100%;
+}
+
+input:checked {
+	background-image: url("../svg/check.svg");
+	background-size: cover;
+}
+
+input:indeterminate {
+	background-image: url("../svg/indeterminate.svg");
+	background-size: cover;
 }

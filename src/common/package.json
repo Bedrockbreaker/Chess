@@ -1,0 +1,9 @@
+{
+  "name": "common",
+  "version": "1.0.0",
+  "description": "Common files used throughout Yggdrasil",
+  "type": "module",
+  "devDependencies": {},
+  "author": "Bedrockbreaker",
+  "license": "MIT"
+}

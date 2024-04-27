@@ -1,4 +1,12 @@
+import { readdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import Hash from "object-hash";
+
+// import type { GameSettings } from "../common/common.d.ts";
+import type { GameState, Tile as ClientTile, Piece as ClientPiece, Move as ClientMove } from "../common/client.d.ts";
+import type { GameSettings, MoveDescriptor, Atom, PieceConstructorOptions, TileConstructorOptions } from "../common/server.ts";
+import { Cardinals, Directions, Modifiers, Events } from "../common/util.ts";
+import type { Pawn } from "./plugins/orthodox.ts";
 
 // https://en.wikipedia.org/wiki/Fairy_chess_piece
 
@@ -38,6 +46,12 @@ class Pos {
 		return new Pos(pos.x * scaleX, (scaleY ?? scaleX) * pos.y);
 	}
 
+	static rotate90cw(pos: Pos, n: number = 1) {
+		const cosT = [1, 0, -1, 0][n % 4];
+		const sinT = [0, -1, 0, 1][n % 4];
+		return new Pos(cosT * pos.x - sinT * pos.y, sinT * pos.x + cosT * pos.y);
+	}
+
 	isValid() {
 		return !Number.isNaN(this.x) && !Number.isNaN(this.y);
 	}
@@ -45,12 +59,6 @@ class Pos {
 	toHex() {
 		return this.y.toString(16).padStart(4, "0") + this.x.toString(16).padStart(4, "0");
 	}
-}
-
-interface TileConstructorOptions {
-	[key: string]: unknown,
-	pos?: Pos,
-	piece?: Piece
 }
 
 /**
@@ -83,6 +91,11 @@ class Tile {
 		copy.piece = this.piece?.clone(board);
 		return copy;
 	}
+
+	package(): ClientTile {
+		if (!this.piece) return {pos: this.pos};
+		return {pos: this.pos, piece: this.piece.package(), pieceNamespace: this.piece.namespace};
+	}
 }
 
 /**
@@ -107,6 +120,19 @@ class Board extends Array<Tile[]> {
 		return this[pos.y]?.[pos.x];
 	}
 
+	package() {
+		const packaged: ClientTile[][] = [];
+
+		for (let y = 0; y < this.height; y++) {
+			packaged[y] = [];
+			for (let x = 0; x < this.width; x++) {
+				packaged[y][x] = this[y][x].package();
+			}
+		}
+
+		return packaged;
+	}
+
 	get width() {
 		return this[0].length;
 	}
@@ -114,16 +140,6 @@ class Board extends Array<Tile[]> {
 	get height() {
 		return this.length;
 	}
-}
-
-interface PieceConstructorOptions {
-	board?: Board,
-	pos?: Pos,
-	name?: string,
-	isWhite?: boolean,
-	isRoyal?: boolean,
-	isIron?: boolean,
-	hasMoved?: boolean
 }
 
 /**
@@ -135,7 +151,9 @@ class Piece {
 	pos: Pos;
 
 	name: string;
-	isWhite: boolean;
+	faction: number;
+	/** The forwards direction for movement */
+	forwards: Cardinals;
 	/** Whether this piece can be checked/check-mated */
 	isRoyal: boolean;
 	/** Whether this piece can be captured */
@@ -150,26 +168,39 @@ class Piece {
 		return this.pos.y;
 	}
 
+	get namespace() {
+		return this.engine.getNamespace(this)!;
+	}
+
 	constructor(engine: YggdrasilEngine, options?: PieceConstructorOptions) {
 		this.engine = engine;
-		this.isWhite = options?.isWhite ?? true;
 		this.board = options?.board || new Board();
 		this.pos = options?.pos || new Pos(NaN, NaN);
 		this.name = options?.name || "Generic Piece";
+		this.faction = options?.faction ?? 0;
+		this.forwards = options?.forwards ?? Cardinals.North;
 		this.isRoyal = options?.isRoyal || false;
 		this.isIron = options?.isIron || false;
 		this.hasMoved = options?.hasMoved || false;
 	}
 
 	clone(board?: Board) {
-		return new (this.constructor as typeof Piece)(this.engine, {board: board, pos: this.pos, name: this.name, isWhite: this.isWhite, isRoyal: this.isRoyal, isIron: this.isIron, hasMoved: this.hasMoved});
+		return new (this.constructor as typeof Piece)(this.engine, {board: board, pos: this.pos, name: this.name, faction: this.faction, isRoyal: this.isRoyal, isIron: this.isIron, hasMoved: this.hasMoved});
 	}
 
 	/**
-	 * Return a JSON-compatible representation of this piece for serialization
+	 * Package this piece to be sent over the network
 	 */
-	JSONify(): PieceConstructorOptions {
-		return {isWhite: this.isWhite, name: this.name, isRoyal: this.isRoyal, isIron: this.isIron, hasMoved: this.hasMoved};
+	package(): ClientPiece {
+		return {
+			pos: {x: this.x, y: this.y},
+			name: this.name,
+			faction: this.faction,
+			forwards: this.forwards,
+			isRoyal: this.isRoyal,
+			isIron: this.isIron,
+			hasMoved: this.hasMoved
+		}
 	}
 
 	/**
@@ -184,7 +215,7 @@ class Piece {
 	 * Whether this piece can be captured by the given piece
 	 */
 	isCapturableBy(piece: Piece) {
-		return !this.isIron && (this.isWhite !== piece.isWhite);
+		return !this.isIron && (this.faction !== piece.faction);
 	}
 
 	/**
@@ -192,72 +223,33 @@ class Piece {
 	 * Positive y-values are considered "forwards" from each player's point of view
 	 */
 	getRelTile(relPos: Pos): Tile | undefined {
-		return this.board.get(Pos.add(this.pos, Pos.scale(relPos, this.isWhite ? 1 : -1, this.isWhite ? -1 : 1)));
+		return this.board.get(Pos.add(this.pos, Pos.rotate90cw(relPos, this.forwards)));
 	}
 }
 
 /**
- * 
- * `.. .N .. .N ..`	Outer ring applies to 8-fold moves (i.e. N)  
- * `.N .F .W .F .N`	Inner ring applies to 4-fold moves (i.e. F and W)  
- * `.. .W ** .W ..` All periods are for text alignment purposes only  
- * `.N .F .W .F .N` The "!" means the reverse of the previous characters are equal  
- * `.. .N .. .N ..`
- * 
- * **Vertical Plane** -- **Horizontal Plane** -- **Indices**  
- * `.. .f .. .f ..`			`.. .l .. .r ..`		`.. .0 .. .5 ..`  
- * `.f .f .f .f .f`			`.l .l .. .r .r`		`.4 .0 .0 .1 .1`  
- * `.. .. ** .. ..`			`.. .l ** .r ..`		`.. .3 ** .1 ..`  
- * `.b .b .b .b .b`			`.l .l .. .r .r`		`.3 .3 .2 .2 .6`  
- * `.. .b .. .b ..`			`.. .l .. .r ..`		`.. .7 .. .2 ..`  
- * 
- * **Vertical Halves** -- **Horizontal Halves** -- **Single Directions** -- **Chiral**  
- * `.. fh .. fh ..`			`.. lh .. rh ..`		`.. lf .. rf ..`		`.. hl .. hr ..`  
- * `fh fh .. fh fh`			`lh lh .. rh rh`		`fl lf!.. rf!fr`		`hr .. .. .. hl`  
- * `.. .. ** .. ..`			`.. .. ** .. ..`		`.. .. ** .. ..`		`.. .. ** .. ..`  
- * `bh bh .. bh bh`			`lh lh .. rh rh`		`bl lb!.. rb!br`		`hl .. .. .. hr`  
- * `.. bh .. bh ..`			`.. lh .. rh ..`		`.. lb .. rb ..`		`.. hr .. hl ..`  
- * 
- * **Vertical Pairs** -- **Horizontal Pairs** -- **Quartets**  
- * `.. ff .. ff ..`			`.. lv .. rv ..`		`.. .V .. .V ..`  
- * `fs .. .. .. fs`			`ll .. .. .. rr`		`.S .. .V .. .S`  
- * `.. .. ** .. ..`			`.. .. ** .. ..`		`.. .S ** .S ..`  
- * `bs .. .. .. bs`			`ll .. .. .. rr`		`.S .. .V .. .S`  
- * `.. bb .. bb ..`			`.. lv .. rv ..`		`.. .V .. .V ..`  
- */
-enum Directions {
-	Forward, Back, Left, Right,
-	ForwardHalf, BackHalf, LeftHalf, RightHalf,
-	LeftFront, RightFront, FrontLeft, FrontRight,
-	BackLeft, LeftBack, RightBack, BackRight,
-	ChiralLeft, ChiralRight, Vertical, Sideways,
-	FrontFront, FrontSide, BackSide, BackBack,
-	LeftVertical, RightVertical, LeftLeft, RightRight
-}
-
-/**
- * Method decorator. Returns a basic moveset corresponding to Betza notation.
- * 
- * @param modality - `true` = Capture Only, `false` = Non-capturing, `undefined` = Either.
- * 
- * @see {@link https://www.gnu.org/software/xboard/Betza.html}
- * @see {@link https://en.wikipedia.org/wiki/Betza%27s_funny_notation#Betza_2.0}
- * 
+ * Method decorator. Adds a move generator to the target method, roughly translated from betza notation
  * @example
  * ```
- * ＠atom(1, 1, 0, [Direction.Forward], true) // Adds forwards (1,1) capture-only moves
+ * // Adds diagonal forwards (1,1) capture-only moves
+ * ＠atom({x: 1, y: 1, directions: [Directions.Forward], modifiers: [Modifiers.Capture]})
  * generateMoves(): Move[] {
-       // do stuff...
-       return moves; // Cool, non-simple moves here
+ * 	// do some calculations...
+ * 	return moves; // Cool, non-simple moves here
  * }
  * ```
+ * @see {@link https://www.gnu.org/software/xboard/Betza.html}
+ * @see {@link https://en.wikipedia.org/wiki/Betza%27s_funny_notation#Betza_2.0}
  */
-function atom<This extends Piece>(x: number, y: number = 0, range: number = 1, directions: Directions[] = [Directions.Forward, Directions.Left, Directions.Back, Directions.Right], modality?: boolean, callback?: (piece: This, newMoves: Move[][], oldMoves: Move[][], allMoves: Move[][]) => Move[][]) {
+// TODO: allow multiple moves to be chained together ("a" argument in extended betza notation)
+function atom<This extends Piece>(atom: Atom<This>) {
 	return function decorator<Args extends [Move[]], Return extends Move[][]>(target: (this: This, ...args: Args) => Return, context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>) {
 		return function wrapper(this: This, ...args: Args) {
-			[x, y] = [Math.max(x, y), Math.min(x, y)];
-			// Each item corresponds to its respective index in Direction
-			const allMods = [
+			const [x, y] = [Math.max(atom.x, atom.y), Math.min(atom.x, atom.y)];
+			const range = atom.range ?? 1;
+			const modifiers = atom.modifiers ?? [];
+
+			const directionIndices = [
 				(y !== 0 ? [0, 1, 4, 5] : [0]), (y !== 0 ? [2, 3, 6, 7] : [2]), (y !== 0 ? [0, 3, 4, 7] : [3]), (y !== 0 ? [1, 2, 5, 6] : [1]),
 				[0, 1, 4, 5], [2, 3, 6, 7], [0, 3, 4, 7], [1, 2, 5, 6],
 				[0], (x === y ? [1] : [5]), (x === y ? [0] : [4]), [1],
@@ -266,46 +258,72 @@ function atom<This extends Piece>(x: number, y: number = 0, range: number = 1, d
 				[0, 5], [1, 4], [3, 6], [2, 7],
 				[0, 7], [2, 5], [3, 4], [1, 6]
 			];
-			const indices = [...new Set(directions.flatMap(dir => allMods[dir]))];
-			const dir = [new Pos(-y, x), new Pos(x, y), new Pos(y, -x), new Pos(-x, -y), ...(y !== 0 && x !== y ? [new Pos(-x, y), new Pos(y, x), new Pos(x, -y), new Pos(-y, -x)] : [])].filter((pos, i) => indices.includes(i));
+			const indices = [...new Set((atom.directions ?? [Directions.Forward, Directions.Left, Directions.Back, Directions.Right]).flatMap(direction => directionIndices[direction]))];
+			const directions = [new Pos(-y, x), new Pos(x, y), new Pos(y, -x), new Pos(-x, -y), ...(y !== 0 && x !== y ? [new Pos(-x, y), new Pos(y, x), new Pos(x, -y), new Pos(-y, -x)] : [])].filter((pos, i) => indices.includes(i));
+			const enabledModifiers = new Set<Modifiers>(modifiers);
 
 			const newMoves: Move[][] = [];
 			for (let i = 1; i < (range !== 0 ? range + 1 : this.board.width * this.board.height); i++) {
-				if (!dir.length) break;
-				const explore = dir.map(pos => Pos.scale(pos, i));
+				if (!directions.length) break;
+				const explore = directions.map(pos => Pos.scale(pos, i));
 				for (let j = explore.length - 1; j >= 0; j--) {
 					const tile = this.getRelTile(explore[j]);
 					if (!tile) continue;
+
 					// TODO: check if this piece is royal, and stop exploration if tile is under attack
 					const move = new Move({piece: this, fromPos: this.pos, toPos: tile.pos});
-					if (tile.piece) {
-						dir.splice(j, 1);
-						// If non-capturing move, or can't capture piece at tile, continue
-						if (modality === false || !tile.piece.isCapturableBy(this)) continue;
+					const piece = tile.piece;
+					
+					if (enabledModifiers.has(Modifiers.NoLeap) && !AStar(this.board, this.getRelTile(Pos.scale(directions[j], i-1))?.pos!, tile.pos, modifiers)) continue;
+
+					if (piece) {
+						directions.splice(j, 1);
+						if (enabledModifiers.has(Modifiers.NonCapture) || !piece.isCapturableBy(this)) continue;
 						move.captureAtPos = tile.pos;
-					} else if (modality === true) {
+					} else if (enabledModifiers.has(Modifiers.Capture)) {
 						continue;
 					}
+
 					newMoves.push([move]);
 				}
 			}
 			const oldMoves = target.call(this, ...args);
-			return callback ? callback(this, newMoves, oldMoves, [...oldMoves, ...newMoves]) : [...oldMoves, ...newMoves];
+			return atom.callback ? atom.callback(this, newMoves, oldMoves, [...oldMoves, ...newMoves]) : [...oldMoves, ...newMoves];
 		}
 	}
 }
 
-type Piecelike = {piece: Piece} | {pieceNamespace: string}
+/**
+ * Performs an A* search between two positions, restricted to the bounded rectangle enclosed by the two positions.  
+ * 
+ * @returns Whether a valid path was found
+ */
+function AStar(board: Board, fromPos: Pos, toPos: Pos, modifiers: Modifiers[]) {
+	const queue = [fromPos];
+	const graph = new Map<Pos, {cost: number, estimate: number}>();
+	graph.set(fromPos, {cost: 0, estimate: Math.max(Math.abs(fromPos.x - toPos.x), Math.abs(fromPos.y - toPos.y))});
 
-type MoveDescriptor = {
-	piece?: Piece,
-	pieceNamespace?: string,
-	removeAtPos?: Pos,
-	canContinue?: boolean
-}	& ({fromPos?: never, toPos?: never} | ({fromPos: Pos, toPos: Pos} & Piecelike))
-	& ({spawnAtPos?: never, spawnProps?: never} | ({spawnAtPos: Pos, spawnProps: PieceConstructorOptions} & Piecelike))
-	& ({captureAtPos?: never} | ({captureAtPos: Pos} & Piecelike))
-	& ({dropAtPos?: never} | ({dropAtPos: Pos} & Piecelike));
+	while (queue.length) {
+		const pos = queue.sort((pos1, pos2) => graph.get(pos1)!.estimate - graph.get(pos2)!.estimate).shift()!;
+		if (Pos.equals(pos, toPos)) return true;
+
+		for (let x = -1; x <= 1; x++) {
+			for (let y = -1; y <= 1; y++) {
+				// BUG: compare against parent.pos and toPos.pos, otherwise this can snake around obstacles
+				if ((x === 0 && y === 0) || (x < Math.min(fromPos.x, toPos.x) || x > Math.max(fromPos.x, toPos.x) || y < Math.min(fromPos.y, toPos.y) || y > Math.max(fromPos.y, toPos.y))) continue;
+				const neighbor = new Pos(pos.x + x, pos.y + y);
+				const tile = board.get(neighbor);
+				if (!tile || (tile.piece && !Pos.equals(neighbor, toPos))) continue;
+				const newCost = graph.get(pos)!.cost + 1;
+				if (newCost >= (graph.get(neighbor)?.cost ?? Infinity)) continue;
+				graph.set(neighbor, {cost: newCost, estimate: newCost + Math.max(Math.abs(neighbor.x - toPos.x), Math.abs(neighbor.y - toPos.y))});
+				if (!queue.some(pos => Pos.equals(pos, neighbor))) queue.unshift(neighbor); // Unshift, so that it acts like a depth-first search for equal-cost paths
+			}
+		}
+	}
+
+	return false;
+}
 
 /**
  * A singular action taken in the game.  
@@ -336,34 +354,31 @@ class Move {
 		this.canContinue = options.canContinue || false;
 	}
 
-	serialize(engine: YggdrasilEngine) {
+	serialize() {
 		let ycin = "";
-		if (this.piece || this.pieceNamespace) ycin += `${this.pieceNamespace || engine.getNamespace(this.piece)} `;
+		if (this.piece || this.pieceNamespace) ycin += `${this.pieceNamespace || this.piece?.namespace || ""} `;
 		if (this.fromPos && this.toPos) ycin += `-${this.fromPos.toHex()}${this.toPos.toHex()}`;
 		if (this.removeAtPos) ycin += `.${this.removeAtPos.toHex()}`;
 		if (this.captureAtPos) ycin += `x${this.captureAtPos.toHex()}`;
-		if (this.spawnAtPos) ycin += `+${this.spawnAtPos.toHex()}${JSON.stringify(this.spawnProps || this.piece?.JSONify()) || ""}`;
+		if (this.spawnAtPos) ycin += `+${this.spawnAtPos.toHex()}${JSON.stringify(this.spawnProps || this.piece?.package()) || ""}`;
 		if (this.dropAtPos) ycin += `*${this.dropAtPos.toHex()}`;
 		// if (i !== this.stateStack.length - 1) ycin += j === moves.length - 1 ? "\n\n" : "\n";
 		return ycin;
 	}
-}
 
-interface GameOptions {
-	board: string[],
-	key: {
-		[key: string]: {
-			piece: {id: string} & PieceConstructorOptions,
-			tile: TileConstructorOptions
-		}
+	package(): ClientMove {
+		return {
+			pieceNamespace: this.pieceNamespace || this.piece?.namespace,
+			fromPos: this.fromPos,
+			toPos: this.toPos,
+			removeAtPos: this.removeAtPos,
+			captureAtPos: this.captureAtPos,
+			spawnAtPos: this.spawnAtPos,
+			dropAtPos: this.dropAtPos,
+			canContinue: this.canContinue,
+			serialized: this.serialize()
+		};
 	}
-	maxHalfTurns: number,
-	plugins: string[]
-}
-
-enum Events {
-	loadEnd,
-	HalfTurnStart, HalfTurnEnd
 }
 
 /**
@@ -380,6 +395,8 @@ class YggdrasilEngine {
 
 	stateStack: {board: Board, moves: Move[], isWhiteTurn: boolean, prevStateHash: string, eventBus: Map<Events, ((...Args: any[]) => void)[]>}[] = [];
 	isLoaded = false;
+
+	plugins: string[] = [];
 
 	static Plugin<This extends (engine: YggdrasilEngine) => void>(pluginId: string, target: This) {
 		YggdrasilEngine.pluginEntryPoints.set(pluginId, target);
@@ -403,14 +420,14 @@ class YggdrasilEngine {
 
 	get pieces() {
 		// TODO: add pieces from players' hands
-		return this.board.flat().map(tile => tile.piece).filter(piece => piece);
+		return this.board.flat().filter(tile => tile.piece !== undefined).map(tile => tile.piece!);
 	}
 
 	constructor() {
 		this.stateStack.push({board: new Board(), isWhiteTurn: true, moves: [], prevStateHash: "", eventBus: new Map()});
 	}
 
-	async load(config: GameOptions) {
+	async load(config: GameSettings) {
 		if (this.isLoaded) throw new Error("This instance of YggdrasilEngine has already been loaded");
 
 		const loadQueue: Promise<NodeModule>[] = [];
@@ -423,23 +440,22 @@ class YggdrasilEngine {
 			if (config.plugins.includes(pluginId)) loadFunc(this);
 		});
 
-		const keys = Object.keys(config.key);
 		for (let y = 0; y < config.board.length; y++) {
 			this.board[y] = [];
-			config.board[y].split("").forEach((key, x) => {
-				const bothKeysDefined = keys.includes(key.toLowerCase()) && keys.includes(key.toUpperCase());
-				const data = config.key[bothKeysDefined ? key : keys.find(key2 => key2.toLowerCase() === key.toLowerCase()) || ""];
+			config.board[y].split("").forEach((char, x) => {
+				const value = config.key[char];
 				let piece: Piece | undefined = undefined;
-				if (data.piece.id) {
-					const pieceClass = this.pieceRegistry.get(data.piece.id);
-					if (!pieceClass) throw new Error(`No such piece exists: "${data.piece.id}"`);
-					piece = new pieceClass(this, {board: this.board, isWhite: bothKeysDefined ? undefined : key === key.toLowerCase(), pos: new Pos(x, y), ...data.piece});
+				if (value) {
+					const pieceClass = this.pieceRegistry.get(value.piece.id);
+					if (!pieceClass) throw new Error(`No such piece exists: "${value.piece.id}"`);
+					piece = new pieceClass(this, {board: this.board, pos: new Pos(x, y), ...value.piece});
 				}
-				const tile = new Tile({pos: new Pos(x, y), piece: piece, ...data.tile});
+				const tile = new Tile({pos: new Pos(x, y), piece: piece, ...value?.tile});
 				this.board[y][x] = tile;
 			});
 		}
 
+		this.plugins = config.plugins;
 		this.isLoaded = true;
 		this.emitEvent(Events.loadEnd);
 	}
@@ -516,7 +532,7 @@ class YggdrasilEngine {
 			let piece = this.board.get(move.fromPos || new Pos())?.piece;
 			if (!piece && move.pieceNamespace) {
 				const testPiece = this.board.get(move.fromPos || new Pos())?.piece;
-				if (testPiece && move.pieceNamespace === this.getNamespace(testPiece)) piece = testPiece;
+				if (move.pieceNamespace === testPiece?.namespace) piece = testPiece;
 			}
 			move.piece = piece;
 
@@ -638,14 +654,25 @@ class YggdrasilEngine {
 		return moves;
 	}
 
+	/**
+	 * Package the game to be sent over the network
+	 */
+	package(): GameState {
+		return {
+			board: this.board.package(),
+			moves: this.state.moves.map(move => move.package()),
+			plugins: this.plugins
+		}
+	}
+
 	private hashState() {
 		return Hash(this, {excludeKeys: key => key !== "stateStack", unorderedArrays: true, unorderedObjects: true, unorderedSets: true});
 	}
 }
 
+const ALL_PLUGINS: readonly string[] = await readdir(fileURLToPath(new URL("./plugins", import.meta.url))).then(fileNames => fileNames.map(name => name.slice(0, -3)));
+
 export {
-	Pos, Tile, Board,
-	Piece, type PieceConstructorOptions,
-	Directions, atom, Move, type MoveDescriptor,
-	YggdrasilEngine, type GameOptions,
+	Pos, Tile, Piece, Board, atom, Move,
+	YggdrasilEngine, ALL_PLUGINS
 }

@@ -10,14 +10,28 @@
 		"rnbqkbnr"
 	],
 	"key": {
-		"X": {"piece": {"id": ""}, "tile": {}},
-		"r": {"piece": {"id": "orthodox:rook"}, "tile": {"canPromoteHere": true}},
-		"n": {"piece": {"id": "orthodox:knight"}, "tile": {"canPromoteHere": true}},
-		"b": {"piece": {"id": "orthodox:bishop"}, "tile": {"canPromoteHere": true}},
-		"q": {"piece": {"id": "orthodox:queen"}, "tile": {"canPromoteHere": true}},
-		"k": {"piece": {"id": "orthodox:king"}, "tile": {"canPromoteHere": true}},
-		"p": {"piece": {"id": "orthodox:pawn"}, "tile": {}}
+		"r": {"piece": {"id": "orthodox:rook", "faction": 0, "forwards": 0}, "tile": {"canPromoteHere": true}},
+		"R": {"piece": {"id": "orthodox:rook", "faction": 1, "forwards": 2}, "tile": {"canPromoteHere": true}},
+		"n": {"piece": {"id": "orthodox:knight", "faction": 0, "forwards": 0}, "tile": {"canPromoteHere": true}},
+		"N": {"piece": {"id": "orthodox:knight", "faction": 1, "forwards": 2}, "tile": {"canPromoteHere": true}},
+		"b": {"piece": {"id": "orthodox:bishop", "faction": 0, "forwards": 0}, "tile": {"canPromoteHere": true}},
+		"B": {"piece": {"id": "orthodox:bishop", "faction": 1, "forwards": 2}, "tile": {"canPromoteHere": true}},
+		"q": {"piece": {"id": "orthodox:queen", "faction": 0, "forwards": 0}, "tile": {"canPromoteHere": true}},
+		"Q": {"piece": {"id": "orthodox:queen", "faction": 1, "forwards": 2}, "tile": {"canPromoteHere": true}},
+		"k": {"piece": {"id": "orthodox:king", "faction": 0, "forwards": 0}, "tile": {"canPromoteHere": true}},
+		"K": {"piece": {"id": "orthodox:king", "faction": 1, "forwards": 2}, "tile": {"canPromoteHere": true}},
+		"p": {"piece": {"id": "orthodox:pawn", "faction": 0, "forwards": 0}, "tile": {}},
+		"P": {"piece": {"id": "orthodox:pawn", "faction": 1, "forwards": 2}, "tile": {}}
 	},
-	"maxHalfTurns": 100,
+	"endConditions": {
+		"extinctionRoyalty": false,
+		"maxRoyaltyInCheck": 1,
+		"rexMultiplex": false,
+		"softmaxBoringTurns": 50,
+		"hardmaxBoringTurns": 75,
+		"softmaxTurnRepetition": 3,
+		"hardmaxTurnRepetition": 5,
+		"turnRepetitionIsLoss": false
+	},
 	"plugins": ["orthodox"]
 }

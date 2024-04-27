@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
-		"lib": ["ES2023"],
-		"target": "ES2022",
+		"lib": ["ESNext"],
+		"target": "ES2022", /* ES2022 is necessary for decorator functions to work. DON'T use ESNext */
 		"useDefineForClassFields": true,
 
 		"module": "NodeNext",

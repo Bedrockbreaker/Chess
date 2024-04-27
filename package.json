@@ -24,6 +24,9 @@
 		"ws": "^8.15.1"
 	},
 	"workspaces": [
-		"src/frontend"
+		"src/frontend",
+		"src/server",
+		"src/engine",
+		"src/common"
 	]
 }

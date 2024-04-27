@@ -1,4 +1,5 @@
 /.vscode
 node_modules
-/Chess_Old
+/reference
 /src/frontend/dist
+.env

@@ -1,4 +1,5 @@
-import { YggdrasilEngine, Piece, type PieceConstructorOptions, Pos, Move } from "../yggdrasil.ts";
+import type { PieceConstructorOptions } from "../../common/server.d.ts";
+import { YggdrasilEngine, Piece, Pos, Move } from "../yggdrasil.ts";
 
 YggdrasilEngine.Plugin("test", (engine: YggdrasilEngine) => engine.registerPiece("test", "test", Test));
 

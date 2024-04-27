@@ -20,11 +20,11 @@
 	height: 3rem;
 }
 
-#menubar div.title, #menubar nav {
-	display: inherit;
-	flex-direction: inherit;
+#menubar div.title a, #menubar nav {
+	display: flex;
+	flex-direction: row;
 	height: 100%;
-	align-items: inherit;
+	align-items: center;
 }
 
 /* "Vertical Line" */
@@ -60,14 +60,15 @@
 @media (width <= 768px) {
 	#menubar nav {
 		position: fixed;
+		flex-direction: column;
 		right: 0px;
 		top: 4rem;
 		height: 100%;
-		flex-direction: column;
+		padding: 0px 1rem;
 		background-color: #1F1F1F;
 		transition: transform .2s ease-in-out;
 		border-left: 2px solid #0078D4;
-		z-index: 1;
+		z-index: 999;
 	}
 
 	#menubar nav.open {

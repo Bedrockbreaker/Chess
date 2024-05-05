@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bm024thowdb4p"]
+
+[ext_resource type="Script" path="res://server/neko/ServerConnection.cs" id="1_1y8dv"]
+
+[node name="ServerConnection" type="Node"]
+script = ExtResource("1_1y8dv")

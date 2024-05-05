@@ -4,6 +4,11 @@
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net7.0</TargetFramework>
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'ios' ">net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <DefaultItemExcludes>$(DefaultItemExcludes);legacy/**/*</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);legacy/**/*;server/nakama/**/*</DefaultItemExcludes>
   </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Nakama">
+      <HintPath>addons/Nakama/Nakama.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

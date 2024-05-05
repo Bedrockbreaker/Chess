@@ -1,3 +1,6 @@
-.vscode/
-legacy/
 .godot/
+build/
+legacy/
+server/nakama/node_modules/
+server/nakama/build/
+server/nakama/local.yml

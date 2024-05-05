@@ -1,0 +1,20 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug Game",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "Build Game",
+			"program": "${userHome}/Documents/Godot-4.2.2/Godot_v4.2.2-stable_mono_win64.exe",
+			"args": [],
+			"cwd": "${workspaceFolder}",
+			"stopAtEntry": false,
+		},
+		{
+			"name": "Attach to Running Game",
+			"type": "coreclr",
+			"request": "attach"
+		}
+	]
+}

@@ -1,0 +1,12 @@
+{
+	"dotnetAcquisitionExtension.enableTelemetry": false,
+	"dotnet.preferCSharpExtension": true,
+	"csharp.suppressHiddenDiagnostics": false,
+	"[csharp]": {
+		"editor.codeActionsOnSave": {
+			"source.addMissingImports": "explicit",
+			"source.fixAll": "explicit",
+			"source.organizeImports": "explicit"
+		}
+	}
+}

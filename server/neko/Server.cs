@@ -25,7 +25,7 @@ public partial class Server : Node2D {
 
 		connection.ConnectionOpened += ConnectionOpened;
 		connection.MatchStarted += MatchStarted;
-		connection.MatchState += PokemonReceived;
+		connection.MatchStateUpdated += PokemonReceived;
 
 		textEdit.TextChanged += () => timer.Start();
 

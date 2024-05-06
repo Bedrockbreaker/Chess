@@ -16,7 +16,22 @@ public partial class ServerConnection : Node {
 	public string serverKey = "defaultkey";
 
 	[Signal]
+	public delegate void AuthenticationErrorEventHandler(string message);
+	[Signal]
+	public delegate void ConnectionErrorEventHandler(string message);
+	[Signal]
+	public delegate void MatchmakerRequestTicketErrorEventHandler(string message);
+	[Signal]
+	public delegate void MatchmakerCancelTicketErrorEventHandler(string message);
+	[Signal]
+	public delegate void MatchJoinErrorEventHandler(string message);
+	[Signal]
+	public delegate void MatchSendStateErrorEventHandler(string message);
+
+	[Signal]
 	public delegate void ConnectionOpenedEventHandler();
+	[Signal]
+	public delegate void ConnectionClosedEventHandler();
 	[Signal]
 	public delegate void PlayerJoinEventHandler(string id);
 	[Signal]
@@ -24,7 +39,7 @@ public partial class ServerConnection : Node {
 	[Signal]
 	public delegate void MatchStartedEventHandler();
 	[Signal]
-	public delegate void MatchStateEventHandler(long opCode, byte[] state, string userId);
+	public delegate void MatchStateUpdatedEventHandler(long opCode, byte[] state, string userId);
 
 	public IUserPresence localPlayer;
 	public IUserPresence hostPlayer;
@@ -85,7 +100,13 @@ public partial class ServerConnection : Node {
 		}
 
 		if (session == null) {
-			session = await client.AuthenticateDeviceAsync(id);
+			try {
+				session = await client.AuthenticateDeviceAsync(id);
+			} catch (Exception e) {
+				EmitSignal(SignalName.AuthenticationError, e.ToString());
+				return;
+			}
+			
 			StoreAuthToken(id, id, session.AuthToken);
 		}
 
@@ -96,24 +117,44 @@ public partial class ServerConnection : Node {
 		socket.ReceivedMatchPresence += OnPresenceEvent;
 		socket.ReceivedMatchState += OnReceiveMatchState;
 
-		await socket.ConnectAsync(session, true);
+		try {
+			await socket.ConnectAsync(session, true);
+		} catch (Exception e) {
+			EmitSignal(SignalName.ConnectionError, e.ToString());
+			return;
+		}
 		EmitSignal(SignalName.ConnectionOpened);
 	}
 
 	public void CloseConnection() {
 		socket = null;
+		EmitDeferred(SignalName.ConnectionClosed);
 	}
 
 	public async void RequestMatchTicket() {
-		ticket = await socket.AddMatchmakerAsync("*", 2, 2);
+		try {
+			ticket = await socket.AddMatchmakerAsync("*", 2, 2);
+		} catch (Exception e) {
+			EmitSignal(SignalName.MatchmakerRequestTicketError, e.ToString());
+		}
 	}
 
 	public async void CancelMatchTicket() {
-		await socket.RemoveMatchmakerAsync(ticket);
+		if (ticket == null) return;
+		try {
+			await socket.RemoveMatchmakerAsync(ticket);
+		} catch (Exception e) {
+			EmitSignal(SignalName.MatchmakerCancelTicketError, e.ToString());
+		}
 	}
 
 	public async void OnMatchmakerMatched(IMatchmakerMatched matched) {
-		match = await socket.JoinMatchAsync(matched);
+		try {
+			match = await socket.JoinMatchAsync(matched);
+		} catch (Exception e) {
+			EmitSignal(SignalName.MatchJoinError, e.ToString());
+			return;
+		}
 		localPlayer = matched.Self.Presence;
 		CreatePlayer(localPlayer);
 		foreach (IUserPresence presence in match.Presences) {
@@ -149,20 +190,36 @@ public partial class ServerConnection : Node {
 		EmitDeferred(SignalName.PlayerLeave, presence.UserId, presence.Username);
 	}
 
+	/**
+	 * <summary>
+	 * Deterministically randomize the host based on the match id
+	 * </summary>
+	*/
 	public void EstablishHost() {
-		// Deterministically randomize the host based on the match id
+		if (match == null || players.Count == 0) return;
 		Random random = new(match.Id.GetHashCode());
 		hostPlayer = players.OrderBy(pair => random.Next()).First().Value;
 	}
 
 	public void OnReceiveMatchState(IMatchState state) {
-		EmitDeferred(SignalName.MatchState, state.OpCode, state.State, state.UserPresence.UserId);
+		EmitDeferred(SignalName.MatchStateUpdated, state.OpCode, state.State, state.UserPresence.UserId);
 	}
 
 	public async void SendMatchState(string state) {
-		await socket.SendMatchStateAsync(match.Id, 1, state);
+		if (match == null) return;
+		try {
+			await socket.SendMatchStateAsync(match.Id, 1, state);
+		} catch (Exception e) {
+			EmitSignal(SignalName.MatchSendStateError, e.ToString());
+		}
 	}
 
+	/**
+	 * <summary>
+	 * Most nakama responses are processed in parallel threads,
+	 * so we need to defer the signal emission
+	 * </summary>
+	*/
 	private void EmitDeferred(string name, params Variant[] args) {
 		Variant[] parameters = new Variant[args.Length + 1];
 		parameters[0] = name;

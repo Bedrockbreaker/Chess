@@ -1,0 +1,13 @@
+### Screens
+
+## Main Menu
+
+screen.mainmenu.button.play=プレー
+screen.mainmenu.button.compendium=フェイペディア
+screen.mainmenu.button.settings=設定
+screen.mainmenu.button.quit=終了
+
+## Settings
+
+screen.settings.header=設定
+screen.settings.button.back=戻る

@@ -1,0 +1,13 @@
+### Screens
+
+## Main Menu
+
+screen.mainmenu.button.play=Play
+screen.mainmenu.button.compendium=Faepedia
+screen.mainmenu.button.settings=Settings
+screen.mainmenu.button.quit=Quit
+
+## Settings
+
+screen.settings.header=Settings
+screen.settings.button.back=Back

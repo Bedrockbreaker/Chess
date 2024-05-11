@@ -1,0 +1,17 @@
+[remap]
+
+importer="bedrockbreaker.lang_importer"
+type="Translation"
+uid="uid://dbw78r3cd0n57"
+path="res://.godot/imported/jp_JP.lang-6a475432c3769fa614c70fd743a9233a.translation"
+
+[deps]
+
+files=["res://resources/lang/jp_JP.translation"]
+
+source_file="res://resources/lang/jp_JP.lang"
+dest_files=["res://.godot/imported/jp_JP.lang-6a475432c3769fa614c70fd743a9233a.translation", "res://resources/lang/jp_JP.translation"]
+
+[params]
+
+compress=true

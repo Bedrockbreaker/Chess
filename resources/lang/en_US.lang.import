@@ -1,0 +1,17 @@
+[remap]
+
+importer="bedrockbreaker.lang_importer"
+type="Translation"
+uid="uid://cclfo8mlxlhg6"
+path="res://.godot/imported/en_US.lang-b337ca0d18f60e0b15a8c9e2804f0cc5.translation"
+
+[deps]
+
+files=["res://resources/lang/en_US.translation"]
+
+source_file="res://resources/lang/en_US.lang"
+dest_files=["res://.godot/imported/en_US.lang-b337ca0d18f60e0b15a8c9e2804f0cc5.translation", "res://resources/lang/en_US.translation"]
+
+[params]
+
+compress=true

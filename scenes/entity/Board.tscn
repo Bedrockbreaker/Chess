@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://f38m37djxf27"]
+
+[ext_resource type="Script" path="res://scenes/entity/Board2D.cs" id="1_kxttp"]
+
+[node name="Board2D" type="Node2D"]
+script = ExtResource("1_kxttp")

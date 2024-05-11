@@ -1,5 +1,7 @@
 using Godot;
 
+namespace Yggdrasil.Client;
+
 public partial class Transitioner : Node {
 
 	public AnimationPlayer player;

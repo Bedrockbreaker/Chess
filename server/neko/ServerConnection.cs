@@ -3,6 +3,9 @@ using Nakama;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Yggdrasil.Tool;
+
+namespace Yggdrasil.Server;
 
 public partial class ServerConnection : Node {
 
@@ -52,7 +55,7 @@ public partial class ServerConnection : Node {
 	private ISocket socket;
 	private IMatchmakerTicket ticket;
 
-    private static string GetAuthToken(string id, string password) {
+	private static string GetAuthToken(string id, string password) {
 		using FileAccess file = FileAccess.OpenEncryptedWithPass("user://auth_token", FileAccess.ModeFlags.Read, password);
 
 		if (file == null || file.GetError() != Error.Ok) return "";
@@ -74,12 +77,12 @@ public partial class ServerConnection : Node {
 	}
 
 	public override async void _Ready() {
-        // FIXME: apparently the serverkey ("defaultkey") is a secret
-        client = new Client(scheme, host, port, serverKey) {
-            Logger = new Logger(),
-        };
+		// FIXME: apparently the serverkey ("defaultkey") is a secret
+		client = new Nakama.Client(scheme, host, port, serverKey) {
+			Logger = new Logger(),
+		};
 
-        string id;
+		string id;
 		if (OS.HasFeature("debug")) {
 			id = Instance.UUID;
 			GetWindow().Title = $"Yggdrasil (DEBUG) - {Instance.id}";
@@ -101,7 +104,7 @@ public partial class ServerConnection : Node {
 				EmitSignal(SignalName.AuthenticationError, e.ToString());
 				return;
 			}
-			
+
 			StoreAuthToken(id, id, session.AuthToken);
 		}
 

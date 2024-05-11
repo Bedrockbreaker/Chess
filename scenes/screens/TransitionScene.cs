@@ -1,5 +1,7 @@
 using Godot;
 
+namespace Yggdrasil.Client.Screen;
+
 public partial class TransitionScene : Button {
 
 	[Export]

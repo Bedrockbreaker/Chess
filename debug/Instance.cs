@@ -1,6 +1,8 @@
 using System;
 using Godot;
 
+namespace Yggdrasil.Tool;
+
 public class Instance {
 
 	public static readonly int id = 0;
@@ -8,7 +10,7 @@ public class Instance {
 
 	static Instance() {
 		TcpServer tcp = new();
-		while(tcp.Listen((ushort)(11000 + id++)) == Error.AlreadyInUse) {}
+		while (tcp.Listen((ushort)(11000 + id++)) == Error.AlreadyInUse) { }
 
 		// Generate a seeded UUIDv4
 		Random random = new(id);

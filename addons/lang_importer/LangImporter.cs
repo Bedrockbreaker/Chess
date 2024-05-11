@@ -5,6 +5,8 @@ using System;
 using System.IO;
 using FileAccess = Godot.FileAccess;
 
+namespace Bedrockbreaker.LangImporter;
+
 [Tool]
 public partial class LangImporter : EditorImportPlugin {
 

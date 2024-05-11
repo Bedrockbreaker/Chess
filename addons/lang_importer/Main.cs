@@ -1,6 +1,8 @@
 #if TOOLS
 using Godot;
 
+namespace Bedrockbreaker.LangImporter;
+
 [Tool]
 public partial class Main : EditorPlugin {
 

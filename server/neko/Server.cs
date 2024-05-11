@@ -1,6 +1,8 @@
 using Godot;
 using Godot.Collections;
 
+namespace Yggdrasil.Server;
+
 public partial class Server : Node2D {
 
 	public Button button;

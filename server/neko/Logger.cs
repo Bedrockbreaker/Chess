@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
 using Godot;
 
+namespace Yggdrasil.Server;
+
 class Logger : Nakama.ILogger {
 
 	private static readonly Regex FormatRegex = new(@"({(\d+)})", RegexOptions.Compiled);

@@ -1,5 +1,7 @@
 using Godot;
 
+namespace Yggdrasil.Client;
+
 public partial class GameController : Node {
 
 	public override void _Process(double delta) {

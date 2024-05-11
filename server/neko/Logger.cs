@@ -6,8 +6,8 @@ class Logger : Nakama.ILogger {
 	private static readonly Regex FormatRegex = new(@"({(\d+)})", RegexOptions.Compiled);
 
 	private static string Colorize(string format, params object[] args) {
-		format = FormatRegex.Replace(format, (match) => $"[/color][color=blue]{match}[/color][color=white]");
-		return $"[color=gray]{Time.GetDatetimeStringFromSystem()}[/color] [color=purple][Nakama][/color] [color=white]{string.Format(format, args)}[/color]";
+		format = FormatRegex.Replace(format, (match) => $"[/color][color=cyan]{match}[/color][color=white]");
+		return $"[color=gray]{Time.GetDatetimeStringFromSystem()}[/color] [color=magenta][Nakama][/color] [color=white]{string.Format(format, args)}[/color]";
 	}
 
 	public void DebugFormat(string format, params object[] args) {

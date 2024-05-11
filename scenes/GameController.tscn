@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://co1dwflkwggv"]
+
+[ext_resource type="Script" path="res://scenes/GameController.cs" id="1_4k0fm"]
+[ext_resource type="Script" path="res://scenes/Transitioner.cs" id="2_ja2r3"]
+
+[sub_resource type="Animation" id="Animation_0uc0h"]
+resource_name = "new_animation"
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fp573"]
+_data = {
+"new_animation": SubResource("Animation_0uc0h")
+}
+
+[node name="GameController" type="Node"]
+script = ExtResource("1_4k0fm")
+
+[node name="Transitioner" type="Node" parent="."]
+script = ExtResource("2_ja2r3")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Transitioner"]
+libraries = {
+"": SubResource("AnimationLibrary_fp573")
+}

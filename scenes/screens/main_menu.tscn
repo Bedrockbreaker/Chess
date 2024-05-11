@@ -1,0 +1,93 @@
+[gd_scene load_steps=4 format=3 uid="uid://81b1orsuwf7t"]
+
+[ext_resource type="Texture2D" uid="uid://6ya54l4kpq5s" path="res://resources/gui/main_menu/logo.png" id="1_4huit"]
+[ext_resource type="Script" path="res://scenes/screens/TransitionScene.cs" id="2_nrpq1"]
+[ext_resource type="Script" path="res://scenes/screens/Quit.cs" id="5_oq8s5"]
+
+[node name="MainMenuScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_vertical_guides_ = [768.0, 384.0]
+metadata/_edit_horizontal_guides_ = [432.0, 216.0]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.25
+anchor_right = 0.75
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Control" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(256, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 10
+
+[node name="Logo" type="TextureRect" parent="VBoxContainer/Control"]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_4huit")
+stretch_mode = 5
+metadata/_aseprite_wizard_config_ = {
+"i_mode": 1,
+"keep_anim_length": false,
+"layer": "",
+"o_ex_p": "",
+"o_folder": "res://resources/gui",
+"o_name": "logo.png",
+"only_visible": true,
+"player": "",
+"slice": "",
+"source": "res://resources/gui/logo.aseprite"
+}
+metadata/_aseprite_wizard_interface_config_ = {
+"layer_section": true,
+"output_section": true,
+"slice_section": false
+}
+metadata/_aseprite_wizard_source_file_hash_ = "18e0854cdfcc7a727bc1cc69e4b97873"
+
+[node name="Control2" type="Control" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Control2"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.333
+anchor_right = 0.666
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Play" type="Button" parent="VBoxContainer/Control2/VBoxContainer"]
+layout_mode = 2
+text = "screen.mainmenu.button.play"
+
+[node name="Faepedia" type="Button" parent="VBoxContainer/Control2/VBoxContainer"]
+layout_mode = 2
+text = "screen.mainmenu.button.compendium"
+
+[node name="Settings" type="Button" parent="VBoxContainer/Control2/VBoxContainer"]
+layout_mode = 2
+text = "screen.mainmenu.button.settings"
+script = ExtResource("2_nrpq1")
+path = "res://scenes/screens/settings.tscn"
+
+[node name="Quit" type="Button" parent="VBoxContainer/Control2/VBoxContainer"]
+layout_mode = 2
+text = "screen.mainmenu.button.quit"
+script = ExtResource("5_oq8s5")

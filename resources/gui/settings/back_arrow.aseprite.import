@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.static-texture"
+type="AtlasTexture"
+uid="uid://pskovmge4fpi"
+path="res://.godot/imported/back_arrow.aseprite-9554688ddf1f1c12b3e8fffc7d35c85e.res"
+
+[deps]
+
+source_file="res://resources/gui/settings/back_arrow.aseprite"
+dest_files=["res://.godot/imported/back_arrow.aseprite-9554688ddf1f1c12b3e8fffc7d35c85e.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

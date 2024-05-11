@@ -53,13 +53,8 @@ public partial class ServerConnection : Node {
 	private IMatchmakerTicket ticket;
 
     private static string GetAuthToken(string id, string password) {
-		FileAccess file;
+		using FileAccess file = FileAccess.OpenEncryptedWithPass("user://auth_token", FileAccess.ModeFlags.Read, password);
 
-		try {
-			file = FileAccess.OpenEncryptedWithPass("user://auth_token", FileAccess.ModeFlags.Read, password);
-		} catch (Exception) {
-			return "";
-		}
 		if (file == null || file.GetError() != Error.Ok) return "";
 
 		string authId = file.GetLine();
@@ -70,7 +65,7 @@ public partial class ServerConnection : Node {
 	}
 
 	private static void StoreAuthToken(string id, string password, string authToken) {
-		FileAccess file = FileAccess.OpenEncryptedWithPass("user://auth_token", FileAccess.ModeFlags.Write, password);
+		using FileAccess file = FileAccess.OpenEncryptedWithPass("user://auth_token", FileAccess.ModeFlags.Write, password);
 		if (file.GetError() != Error.Ok) return;
 
 		file.StoreLine(id);

@@ -8,5 +8,12 @@
 			"source.fixAll": "explicit",
 			"source.organizeImports": "explicit"
 		}
-	}
+	},
+	"editor.formatOnPaste": true,
+	"editor.formatOnSave": true,
+	"editor.formatOnType": true,
+	"todo-tree.filtering.excludeGlobs": [
+		"**/node_modules/*/**",
+		"**/addons"
+	]
 }

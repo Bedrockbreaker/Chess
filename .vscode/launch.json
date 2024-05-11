@@ -9,7 +9,7 @@
 			"program": "${userHome}/Documents/Godot-4.2.2/Godot_v4.2.2-stable_mono_win64.exe",
 			"args": [],
 			"cwd": "${workspaceFolder}",
-			"stopAtEntry": false,
+			"stopAtEntry": false
 		},
 		{
 			"name": "Attach to Running Game",

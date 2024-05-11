@@ -11,7 +11,7 @@ public partial class Server : Node2D {
 	public HttpRequest getPokeImage;
 
 	private ServerConnection connection;
-	
+
 	public override void _Ready() {
 		connection = GetNode<ServerConnection>("/root/ServerConnection");
 		button = GetNode<Button>("Button");
@@ -68,7 +68,7 @@ public partial class Server : Node2D {
 			GD.PushError("Error couldn't fetch info");
 			return;
 		}
-		
+
 		Json parser = new();
 		Error error = parser.Parse(body.GetStringFromUtf8());
 		if (error != Error.Ok) {

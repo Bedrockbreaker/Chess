@@ -9,10 +9,8 @@ namespace Yggdrasil.Client;
 public partial class Board2D : Node2D {
 
 	public PackedScene scene = ResourceLoader.Load<PackedScene>("res://scenes/entity/Piece.tscn");
+	public Game game = new(new Config("res://resources/config/standard.yml"));
 
-	public Game game = new();
-
-	public Config config = new("res://resources/config/standard.yml");
 
 	public override void _Ready() {
 		for (int x = 0; x < 5; x++) {

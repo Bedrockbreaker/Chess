@@ -54,9 +54,9 @@ public struct PieceDescription {
 public struct EndConditions {
 
 	public bool ExtinctionRoyalty { get; set; }
-	public uint MaxRoyaltyInCheck { get; set; }
+	public int MaxRoyaltyInCheck { get; set; }
 	public bool RexMultiplex { get; set; }
-	public List<uint> MaxBoringTurns { get; set; }
-	public List<uint> MaxTurnRepetitions { get; set; }
+	public List<int> MaxBoringTurns { get; set; }
+	public List<int> MaxTurnRepetitions { get; set; }
 	public bool TurnRepetitionIsLoss { get; set; }
 }

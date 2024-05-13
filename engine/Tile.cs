@@ -8,12 +8,12 @@ public struct Tile {
 	public Pos Pos;
 	public Optional<IPiece> Piece;
 
-	public Tile(Pos pos, IPiece piece) {
+	public Tile(Pos pos, Optional<IPiece> piece = default) {
 		Pos = pos;
-		Piece = new Optional<IPiece>(piece);
+		Piece = piece;
 	}
 
 	public readonly Tile Copy() {
-		return new Tile(Pos.Copy(), Piece ? Piece.Value.Copy() : default);
+		return new Tile(Pos.Copy(), Piece ? new Optional<IPiece>(Piece.Value.Copy()) : Optional<IPiece>.None);
 	}
 }

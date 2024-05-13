@@ -12,9 +12,40 @@
 			"stopAtEntry": false
 		},
 		{
+			"name": "Debug Game - Pick Scene",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "Build Game",
+			"program": "${userHome}/Documents/Godot-4.2.2/Godot_v4.2.2-stable_mono_win64.exe",
+			"args": [
+				"${input:pickScene}"
+			],
+			"cwd": "${workspaceFolder}",
+			"stopAtEntry": false
+		},
+		{
 			"name": "Attach to Running Game",
 			"type": "coreclr",
 			"request": "attach"
+		}
+	],
+	"inputs": [
+		{
+			"id": "pickScene",
+			"type": "command",
+			"command": "extension.commandvariable.file.pickFile",
+			"args": {
+				"include": "**/*.{tscn,scn}",
+				"exclude": "**/{addons,.godot}/**",
+				"display": "transform",
+				"labelTransform": {
+					"find": "^.+[\\\\|\\/](.+)\\.t?scn$",
+					"replace": "$1"
+				},
+				"descriptionTransform": {
+					"text": "${relativeFile}"
+				}
+			}
 		}
 	]
 }

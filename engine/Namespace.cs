@@ -2,6 +2,9 @@ using System;
 
 namespace Yggdrasil.Engine;
 
+/// <summary>
+/// A unique, human-readable identifier for a piece
+/// </summary>
 public readonly struct Namespace {
 
 	public string PluginId { get; }

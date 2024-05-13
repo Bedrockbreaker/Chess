@@ -10,5 +10,8 @@
     <Reference Include="Nakama">
       <HintPath>addons/Nakama/Nakama.dll</HintPath>
     </Reference>
+    <Reference Include="YamlDotNet">
+      <HintPath>addons/YamlDotNet/YamlDotNet.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

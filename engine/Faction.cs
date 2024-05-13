@@ -1,5 +1,4 @@
 using System;
-using Godot;
 
 namespace Yggdrasil.Engine;
 
@@ -7,14 +6,17 @@ namespace Yggdrasil.Engine;
 /// A faction which pieces are affiliated with.
 /// <para/>
 /// Factions are used to determine which pieces can attack each other,
-/// as well as their color tint, and color-blind friendly icon.
+/// their color tint and color-blind friendly icon,
+/// which direction the board is facing on their client,
+/// and the time controls that faction is under.
 /// </summary>
 public struct Faction {
 
 	public int Id { get; set; }
 	public string Name { get; set; }
-	public Color Color { get; set; }
+	public int Color { get; set; }
 	public string Icon { get; set; }
+	public TimeControls TimeControls { get; set; }
 
 	public static bool operator ==(Faction a, Faction b) {
 		return a.Id == b.Id;

@@ -1,0 +1,136 @@
+name: Standard
+description: Standard chess setup, according to FIDE tournament rules
+config-version: 1
+
+board:
+  - [R, N, B, Q, K, B, N, R]
+  - [P, P, P, P, P, P, P, P]
+  - [., ., ., ., ., ., ., .]
+  - [., ., ., ., ., ., ., .]
+  - [., ., ., ., ., ., ., .]
+  - [., ., ., ., ., ., ., .]
+  - [p, p, p, p, p, p, p, p]
+  - [r, n, b, q, k, b, n, r]
+
+board-key:
+  r:
+    piece:
+      namespace: orthodox:rook
+      faction: 0
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  n:
+    piece:
+      namespace: orthodox:knight
+      faction: 0
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  b:
+    piece:
+      namespace: orthodox:bishop
+      faction: 0
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  q:
+    piece:
+      namespace: orthodox:queen
+      faction: 0
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  k:
+    piece:
+      namespace: orthodox:king
+      faction: 0
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  p:
+    piece:
+      namespace: orthodox:pawn
+      faction: 0
+      forwards: up
+  R:
+    piece:
+      namespace: orthodox:rook
+      faction: 1
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  N:
+    piece:
+      namespace: orthodox:knight
+      faction: 1
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  B:
+    piece:
+      namespace: orthodox:bishop
+      faction: 1
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  Q:
+    piece:
+      namespace: orthodox:queen
+      faction: 1
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  K:
+    piece:
+      namespace: orthodox:king
+      faction: 1
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  P:
+    piece:
+      namespace: orthodox:pawn
+      faction: 1
+      forwards: down
+
+factions:
+  - id: 0
+    name: White
+    color: 0xFFFFFF
+    icon: circle
+    time-controls:
+      main: 7200
+      increment: 30
+      enable-increment-after-turn: 60
+      overtime:
+        - amount: 3600
+          turn: 40
+        - amount: 900
+          turn: 60
+  - id: 1
+    name: Black
+    color: 0x000000
+    icon: square
+    time-controls:
+      main: 7200
+      increment: 30
+      enable-increment-after-turn: 60
+      overtime:
+        - amount: 3600
+          turn: 40
+        - amount: 900
+          turn: 60
+
+end-conditions:
+  extinction-royalty: false
+  max-royalty-in-check: 1
+  rex-multiplex: false
+  max-boring-turns: [50, 75]
+  max-turn-repetitions: [3, 5]
+  turn-repetition-is-loss: false
+
+plugins:
+  - orthodox
+
+moves: []

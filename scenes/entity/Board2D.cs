@@ -7,6 +7,8 @@ public partial class Board2D : Node2D {
 
 	public PackedScene scene = ResourceLoader.Load<PackedScene>("res://scenes/entity/Piece.tscn");
 
+	public Config config = new("res://resources/config/standard.yml");
+
 	public override void _Ready() {
 		for (int x = 0; x < 5; x++) {
 			for (int y = 0; y < 5; y++) {

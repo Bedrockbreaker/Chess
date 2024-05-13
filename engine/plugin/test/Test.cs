@@ -1,3 +1,5 @@
+using Godot;
+
 namespace Yggdrasil.Engine.Plugin;
 
 public class Test : Piece {
@@ -11,6 +13,7 @@ public class Test : Piece {
 	public override Namespace GetNamespace() => Namespace;
 
 	protected static void RegisterPlugin(Game game) {
+		GD.Print("Test plugin registered");
 		game.RegisterPieceFactory(Namespace, () => new Test());
 	}
 

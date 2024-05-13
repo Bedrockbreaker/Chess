@@ -15,7 +15,7 @@ public class Game {
 	private Dictionary<Namespace, Func<IPiece>> PieceFactories { get; } = new();
 
 	public Game() {
-		RegisterPlugin.Invoke(this);
+		// RegisterPlugin.Invoke(this);
 	}
 
 	public void RegisterPieceFactory(Namespace namespaceId, Func<IPiece> factory) {

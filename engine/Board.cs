@@ -5,12 +5,12 @@ namespace Yggdrasil.Engine;
 /// </summary>
 public struct Board {
 
-	public readonly int width;
-	public readonly int height;
-	public readonly Tile[,] Tiles;
+	public int Width { get; }
+	public int Height { get; }
+	public Tile[,] Tiles { get; }
 
 	public readonly Optional<Tile> GetTile(Pos pos) {
-		if (pos.x < 0 || pos.y < 0 || pos.x >= width || pos.y >= height) return default;
+		if (pos.x < 0 || pos.y < 0 || pos.x >= Width || pos.y >= Height) return default;
 		return Tiles[pos.x, pos.y];
 	}
 }

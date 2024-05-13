@@ -1,21 +1,7 @@
-using Godot;
+namespace Yggdrasil.Engine.Plugin.Test;
 
-namespace Yggdrasil.Engine.Plugin;
-
+[YggdrasilPiece("test", "test")]
 public class Test : Piece {
-
-	public static readonly new Namespace Namespace = new("test", "test");
-
-	static Test() {
-		Game.RegisterPlugin += RegisterPlugin;
-	}
-
-	public override Namespace GetNamespace() => Namespace;
-
-	protected static void RegisterPlugin(Game game) {
-		GD.Print("Test plugin registered");
-		game.RegisterPieceFactory(Namespace, () => new Test());
-	}
 
 	public Test() : base() {
 		Nickname = "Test";

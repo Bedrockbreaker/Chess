@@ -4,14 +4,14 @@ namespace Yggdrasil.Engine;
 
 public readonly struct Namespace {
 
-	public readonly string PluginId;
-
-	public readonly string Path;
+	public string PluginId { get; }
+	public string Path { get; }
 
 	public Namespace(string pluginId, string path) {
 		PluginId = pluginId;
 		Path = path;
 	}
+
 	public readonly override string ToString() {
 		return $"{PluginId}:{Path}";
 	}

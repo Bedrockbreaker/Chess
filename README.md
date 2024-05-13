@@ -5,13 +5,13 @@ A WIP port to the Godot game engine.
 
 ## Building
 
-### Game (Client + Server)
+### Game
 
 ```bash
 > dotnet build
 ```
 
-### Standalone Server
+### Server
 
 #### Local
 

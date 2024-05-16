@@ -12,6 +12,8 @@ namespace Yggdrasil.Engine;
 /// </summary>
 public class Game {
 
+	public GameState State { get => History.Peek(); }
+
 	private Dictionary<Namespace, Func<IPiece>> PieceFactory { get; } = new();
 	private Dictionary<Type, Namespace> PieceRegistry { get; } = new();
 	private Stack<GameState> History { get; } = new();
@@ -67,10 +69,16 @@ public class Game {
 				// TODO: set tile properties
 			}
 		}
+
+		PushState(new GameState(board, new List<Move>(), new Faction()));
 	}
 
 	public Namespace GetNamespace(IPiece piece) {
 		return PieceRegistry[piece.GetType()];
+	}
+
+	private void PushState(GameState state) {
+		History.Push(state);
 	}
 }
 
@@ -79,6 +87,12 @@ public struct GameState {
 	public Board Board { get; }
 	public List<Move> Moves { get; }
 	public Faction ActiveFaction { get; }
+
+	public GameState(Board board, List<Move> moves, Faction activeFaction) {
+		Board = board;
+		Moves = moves;
+		ActiveFaction = activeFaction;
+	}
 }
 
 [AttributeUsage(AttributeTargets.Class)]

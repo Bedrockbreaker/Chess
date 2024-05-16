@@ -2,7 +2,6 @@ using Godot;
 
 using Yggdrasil.Client.Entity.Piece;
 using Yggdrasil.Engine;
-using Yggdrasil.Engine.Plugin.Test;
 
 namespace Yggdrasil.Client;
 
@@ -13,13 +12,21 @@ public partial class Board2D : Node2D {
 
 
 	public override void _Ready() {
-		for (int x = 0; x < 5; x++) {
-			for (int y = 0; y < 5; y++) {
-				Piece2D piece = scene.Instantiate<Piece2D>();
-				AddChild(piece);
-				piece.game = game;
-				piece.Position += new Vector2(x * 32 + 32, y * 32 + 32);
-				piece.Piece = new Test();
+		GameState state = game.State;
+		Board board = state.Board;
+
+		for (int x = 0; x < board.Width; x++) {
+			for (int y = 0; y < board.Height; y++) {
+				Optional<Tile> tile = board.GetTile(new Pos(x, y));
+				if (!tile) continue;
+				Optional<IPiece> piece = tile.Value.Piece;
+				if (!piece) continue;
+
+				Piece2D piece2d = scene.Instantiate<Piece2D>();
+				AddChild(piece2d);
+				piece2d.game = game;
+				piece2d.Position = new Vector2(x * 32 + 32, y * 32 + 32);
+				piece2d.Piece = piece.Value;
 			}
 		}
 	}

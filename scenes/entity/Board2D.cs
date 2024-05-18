@@ -10,7 +10,6 @@ public partial class Board2D : Node2D {
 	public PackedScene scene = ResourceLoader.Load<PackedScene>("res://scenes/entity/Piece.tscn");
 	public Game game = new(new Config("res://resources/config/standard.yml"));
 
-
 	public override void _Ready() {
 		GameState state = game.State;
 		Board board = state.Board;

@@ -39,6 +39,10 @@ project/assembly_name="Yggdrasil"
 
 enabled=PackedStringArray("res://addons/AsepriteWizard/plugin.cfg", "res://addons/Asset_Drawer/plugin.cfg", "res://addons/lang_importer/plugin.cfg")
 
+[filesystem]
+
+import/blender/enabled=false
+
 [gui]
 
 theme/custom="res://resources/theme/theme.tres"

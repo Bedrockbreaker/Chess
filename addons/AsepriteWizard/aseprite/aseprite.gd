@@ -1,7 +1,7 @@
 @tool
 extends RefCounted
 
-var _config = preload("../config/config.gd").new()
+var _config = preload ("../config/config.gd").new()
 
 #
 # Output:
@@ -47,7 +47,6 @@ func export_file(file_name: String, output_folder: String, options: Dictionary) 
 		"is_first_import": is_new,
 	}
 
-
 func export_layers(file_name: String, output_folder: String, options: Dictionary) -> Array:
 	var exception_pattern = options.get('exception_pattern', "")
 	var only_visible_layers = options.get('only_visible_layers', false)
@@ -62,7 +61,6 @@ func export_layers(file_name: String, output_folder: String, options: Dictionary
 			output.push_back(export_layer(file_name, layer, output_folder, options))
 
 	return output
-
 
 func export_layer(file_name: String, layer_name: String, output_folder: String, options: Dictionary) -> Dictionary:
 	var output_prefix = options.get('output_filename', "").strip_edges()
@@ -96,6 +94,52 @@ func export_layer(file_name: String, layer_name: String, output_folder: String, 
 		"is_first_import": is_new,
 	}
 
+func export_tags(file_name: String, output_folder: String, options: Dictionary) -> Array:
+	var exception_pattern = options.get('exception_pattern', "")
+	var only_visible_layers = options.get('only_visible_layers', false)
+	var basename = _get_file_basename(file_name)
+	var tags = list_tags(file_name, only_visible_layers)
+	var exception_regex = _compile_regex(exception_pattern)
+
+	var output = []
+
+	for tag in tags:
+		if tag != "" and (not exception_regex or exception_regex.search(tag) == null):
+			output.push_back(export_tag(file_name, tag, output_folder, options))
+
+	return output
+
+func export_tag(file_name: String, tag_name: String, output_folder: String, options: Dictionary) -> Dictionary:
+	var output_prefix = options.get('output_filename', "").strip_edges()
+	var output_dir = output_folder.replace("res://", "./").strip_edges()
+	var data_file = "%s/%s%s.json" % [output_dir, output_prefix, tag_name]
+	var sprite_sheet = "%s/%s%s.png" % [output_dir, output_prefix, tag_name]
+	var output = []
+	var arguments = [
+		"-b",
+		"--sheet",
+		sprite_sheet,
+		file_name
+	]
+	arguments.push_front(tag_name)
+	arguments.push_front("--tag")
+
+	_add_sheet_type_arguments(arguments, options)
+
+	var local_sprite_sheet_path = ProjectSettings.localize_path(sprite_sheet)
+	var is_new = not ResourceLoader.exists(local_sprite_sheet_path)
+
+	var exit_code = _execute(arguments, output)
+	if exit_code != 0:
+		print('aseprite: failed to export tag spritesheet')
+		print(output)
+		return {}
+
+	return {
+		"data_file": ProjectSettings.localize_path(data_file),
+		"sprite_sheet": local_sprite_sheet_path,
+		"is_first_import": is_new,
+	}
 
 func _add_ignore_layer_arguments(file_name: String, arguments: Array, exception_pattern: String):
 	var layers = _get_exception_layers(file_name, exception_pattern)
@@ -104,15 +148,14 @@ func _add_ignore_layer_arguments(file_name: String, arguments: Array, exception_
 			arguments.push_front(l)
 			arguments.push_front('--ignore-layer')
 
-func _add_sheet_type_arguments(arguments: Array, options : Dictionary):
-	var column_count : int = options.get("column_count", 0)
+func _add_sheet_type_arguments(arguments: Array, options: Dictionary):
+	var column_count: int = options.get("column_count", 0)
 	if column_count > 0:
 		arguments.push_back("--merge-duplicates") # Yes, this is undocumented
 		arguments.push_back("--sheet-columns")
 		arguments.push_back(column_count)
 	else:
 		arguments.push_back("--sheet-pack")
-
 
 func _get_exception_layers(file_name: String, exception_pattern: String) -> Array:
 	var layers = list_layers(file_name)
@@ -127,8 +170,7 @@ func _get_exception_layers(file_name: String, exception_pattern: String) -> Arra
 
 	return exception_layers
 
-
-func list_layers(file_name: String, only_visible = false) -> Array:
+func list_layers(file_name: String, only_visible=false) -> Array:
 	var output = []
 	var arguments = ["-b", "--list-layers", file_name]
 
@@ -151,7 +193,6 @@ func list_layers(file_name: String, only_visible = false) -> Array:
 		sanitized.append(s.strip_edges())
 	return sanitized
 
-
 func list_slices(file_name: String) -> Array:
 	var output = []
 	var arguments = ["-b", "--list-slices", file_name]
@@ -172,6 +213,28 @@ func list_slices(file_name: String) -> Array:
 		sanitized.append(s.strip_edges())
 	return sanitized
 
+func list_tags(file_name: String, only_visible=false) -> Array:
+	var output = []
+	var arguments = ["-b", "--list-tags", file_name]
+
+	if not only_visible:
+		arguments.push_front("--all-layers")
+
+	var exit_code = _execute(arguments, output)
+
+	if exit_code != 0:
+		printerr('aseprite: failed listing tags')
+		printerr(output)
+		return []
+
+	if output.is_empty():
+		return output
+
+	var raw = output[0].split('\n')
+	var sanitized = []
+	for s in raw:
+		sanitized.append(s.strip_edges())
+	return sanitized
 
 func _export_command_common_arguments(source_name: String, data_path: String, spritesheet_path: String) -> Array:
 	return [
@@ -187,18 +250,14 @@ func _export_command_common_arguments(source_name: String, data_path: String, sp
 		source_name
 	]
 
-
 func _execute(arguments, output):
 	return OS.execute(_aseprite_command(), arguments, output, true, true)
-
 
 func _aseprite_command() -> String:
 	return _config.is_command_or_control_pressed()
 
-
 func _get_file_basename(file_path: String) -> String:
 	return file_path.get_file().trim_suffix('.%s' % file_path.get_extension())
-
 
 func _compile_regex(pattern):
 	if pattern == "":
@@ -210,19 +269,15 @@ func _compile_regex(pattern):
 
 	printerr('exception regex error')
 
-
 func test_command():
 	var exit_code = OS.execute(_aseprite_command(), ['--version'], [], true)
 	return exit_code == 0
 
-
 func is_valid_spritesheet(content):
 	return content.has("frames") and content.has("meta") and content.meta.has('image')
 
-
 func get_content_frames(content):
-	return content.frames if typeof(content.frames) == TYPE_ARRAY  else content.frames.values()
-
+	return content.frames if typeof(content.frames) == TYPE_ARRAY else content.frames.values()
 
 func get_slice_rect(content: Dictionary, slice_name: String) -> Variant:
 	if not content.has("meta") or not content.meta.has("slices"):
@@ -233,7 +288,6 @@ func get_slice_rect(content: Dictionary, slice_name: String) -> Variant:
 				var p = slice.keys[0].bounds
 				return Rect2(p.x, p.y, p.w, p.h)
 	return null
-
 
 ##
 ## Exports tileset layers

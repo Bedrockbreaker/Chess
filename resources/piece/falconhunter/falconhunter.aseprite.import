@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://dxhqusewbfhbe"
+path="res://.godot/imported/falconhunter.aseprite-99911dbb68c99feccf3396cd7efa3914.res"
+
+[deps]
+
+source_file="res://resources/piece/falconhunter/falconhunter.aseprite"
+dest_files=["res://.godot/imported/falconhunter.aseprite-99911dbb68c99feccf3396cd7efa3914.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

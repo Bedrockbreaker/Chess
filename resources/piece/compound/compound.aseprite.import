@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://dvd7duuskdim4"
+path="res://.godot/imported/compound.aseprite-63c0e630ef656c040eb8fdf652c6f4c6.res"
+
+[deps]
+
+source_file="res://resources/piece/compound/compound.aseprite"
+dest_files=["res://.godot/imported/compound.aseprite-63c0e630ef656c040eb8fdf652c6f4c6.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://b002v7wy0ddyy"
+path="res://.godot/imported/omega.aseprite-1cf67b357977986cd1cb676c178aaf6b.res"
+
+[deps]
+
+source_file="res://resources/piece/omega/omega.aseprite"
+dest_files=["res://.godot/imported/omega.aseprite-1cf67b357977986cd1cb676c178aaf6b.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

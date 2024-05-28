@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://dvlvfa6boyap7"
+path="res://.godot/imported/falcon.aseprite-d18869e9de09e229c7434605659dd157.res"
+
+[deps]
+
+source_file="res://resources/piece/falcon/falcon.aseprite"
+dest_files=["res://.godot/imported/falcon.aseprite-d18869e9de09e229c7434605659dd157.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

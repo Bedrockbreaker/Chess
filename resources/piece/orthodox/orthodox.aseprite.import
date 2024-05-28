@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://c1pt61dt3bujf"
+path="res://.godot/imported/orthodox.aseprite-b8889847308bff854dd07fffd082ba70.res"
+
+[deps]
+
+source_file="res://resources/piece/orthodox/orthodox.aseprite"
+dest_files=["res://.godot/imported/orthodox.aseprite-b8889847308bff854dd07fffd082ba70.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

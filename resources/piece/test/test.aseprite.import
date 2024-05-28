@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://cma5qgdk5nu5s"
+path="res://.godot/imported/test.aseprite-621841911912f49ad806883fe213ec58.res"
+
+[deps]
+
+source_file="res://resources/piece/test/test.aseprite"
+dest_files=["res://.godot/imported/test.aseprite-621841911912f49ad806883fe213ec58.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

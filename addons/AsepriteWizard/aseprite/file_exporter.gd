@@ -1,12 +1,13 @@
 @tool
 extends RefCounted
 
-var result_code = preload("../config/result_codes.gd")
-var _aseprite = preload("aseprite.gd").new()
+var result_code = preload ("../config/result_codes.gd")
+var _aseprite = preload ("aseprite.gd").new()
 
 enum {
 	FILE_EXPORT_MODE,
-	LAYERS_EXPORT_MODE
+	LAYERS_EXPORT_MODE,
+	TAGS_EXPORT_MODE
 }
 
 ##
@@ -42,9 +43,13 @@ func generate_aseprite_files(source_file: String, options: Dictionary):
 			if output.is_empty():
 				return result_code.error(result_code.ERR_NO_VALID_LAYERS_FOUND)
 			return result_code.result(output)
+		TAGS_EXPORT_MODE:
+			var output = _aseprite.export_tags(source_file, options.output_folder, options)
+			if output.is_empty():
+				return result_code.error(result_code.ERR_NO_VALID_TAGS_FOUND)
+			return result_code.result(output)
 		_:
 			return result_code.error(result_code.ERR_UNKNOWN_EXPORT_MODE)
-
 
 ##
 ## Generate Aseprite spritesheet and data file for source.
@@ -79,7 +84,6 @@ func generate_aseprite_file(source_file: String, options: Dictionary) -> Diction
 
 	return result_code.result(output)
 
-
 ##
 ## Generate a spritesheet with all tilesets in the file
 ##
@@ -94,7 +98,7 @@ func generate_aseprite_file(source_file: String, options: Dictionary) -> Diction
 ##     sprite_sheet: sprite sheet path
 ##     data_file:  json file path
 ##
-func generate_tileset_files(source_file: String, options = {}) -> Dictionary:
+func generate_tileset_files(source_file: String, options={}) -> Dictionary:
 	var check = _initial_checks(source_file, options)
 
 	if check != result_code.SUCCESS:
@@ -106,7 +110,6 @@ func generate_tileset_files(source_file: String, options = {}) -> Dictionary:
 		return result_code.error(result_code.ERR_ASEPRITE_EXPORT_FAILED)
 
 	return result_code.result(output)
-
 
 ##
 ## Perform initial source file and output folder checks
@@ -122,7 +125,6 @@ func _initial_checks(source: String, options: Dictionary) -> int:
 		return result_code.ERR_OUTPUT_FOLDER_NOT_FOUND
 
 	return result_code.SUCCESS
-
 
 ##
 ## Load Aseprite source data file and fails if the

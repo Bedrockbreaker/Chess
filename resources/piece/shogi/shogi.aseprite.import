@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://vwxrdrgnm01v"
+path="res://.godot/imported/shogi.aseprite-97b34cb5f98d62bb28808dc4c598edb5.res"
+
+[deps]
+
+source_file="res://resources/piece/shogi/shogi.aseprite"
+dest_files=["res://.godot/imported/shogi.aseprite-97b34cb5f98d62bb28808dc4c598edb5.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://d1ydairdhuldk"
+path="res://.godot/imported/ultima.aseprite-d2e369559ab7749d5f3592d545080345.res"
+
+[deps]
+
+source_file="res://resources/piece/ultima/ultima.aseprite"
+dest_files=["res://.godot/imported/ultima.aseprite-d2e369559ab7749d5f3592d545080345.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

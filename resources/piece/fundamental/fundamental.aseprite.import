@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://dvbucx7h6dwer"
+path="res://.godot/imported/fundamental.aseprite-e2ea5f2f06ef33fdf0b0bde5ad96e5b9.res"
+
+[deps]
+
+source_file="res://resources/piece/fundamental/fundamental.aseprite"
+dest_files=["res://.godot/imported/fundamental.aseprite-e2ea5f2f06ef33fdf0b0bde5ad96e5b9.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

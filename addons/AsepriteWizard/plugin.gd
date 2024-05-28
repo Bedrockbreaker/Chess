@@ -2,33 +2,34 @@
 extends EditorPlugin
 
 # importers
-const NoopImportPlugin = preload("importers/noop_import_plugin.gd")
-const SpriteFramesImportPlugin = preload("importers/sprite_frames_import_plugin.gd")
-const TilesetTextureImportPlugin = preload("importers/tileset_texture_import_plugin.gd")
-const TextureImportPlugin = preload("importers/static_texture_import_plugin.gd")
+const NoopImportPlugin = preload ("importers/noop_import_plugin.gd")
+const SpriteFramesImportPlugin = preload ("importers/sprite_frames_import_plugin.gd")
+const TilesetTextureImportPlugin = preload ("importers/tileset_texture_import_plugin.gd")
+const TextureImportPlugin = preload ("importers/static_texture_import_plugin.gd")
+const TextureTagsImportPlugin = preload ("importers/static_texture_tags_import_plugin.gd")
 
 # export
-const ExportPlugin = preload("export/metadata_export_plugin.gd")
+const ExportPlugin = preload ("export/metadata_export_plugin.gd")
 # interface
-const ConfigDialog = preload('config/config_dialog.tscn')
-const WizardWindow = preload("interface/docks/wizard/as_wizard_dock_container.tscn")
-const AsepriteDockImportsWindow = preload('interface/imports_manager/aseprite_imports_manager.tscn')
-const ImportsManagerPanels = preload('interface/imports_manager/import_panels.tscn')
+const ConfigDialog = preload ('config/config_dialog.tscn')
+const WizardWindow = preload ("interface/docks/wizard/as_wizard_dock_container.tscn")
+const AsepriteDockImportsWindow = preload ('interface/imports_manager/aseprite_imports_manager.tscn')
+const ImportsManagerPanels = preload ('interface/imports_manager/import_panels.tscn')
 
-const AnimatedSpriteInspectorPlugin = preload("interface/docks/animated_sprite/inspector_plugin.gd")
-const SpriteInspectorPlugin = preload("interface/docks/sprite/inspector_plugin.gd")
+const AnimatedSpriteInspectorPlugin = preload ("interface/docks/animated_sprite/inspector_plugin.gd")
+const SpriteInspectorPlugin = preload ("interface/docks/sprite/inspector_plugin.gd")
 
 const tool_menu_name = "Aseprite Wizard"
 const menu_item_name = "Spritesheet Wizard Dock..."
 const config_menu_item_name = "Config..."
 const import_menu_item_name = "Imports Manager..."
 
-var config = preload("config/config.gd").new()
+var config = preload ("config/config.gd").new()
 var window: TabContainer
 var config_window: PopupPanel
 var imports_list_window: Window
 var imports_list_panel: MarginContainer
-var export_plugin : EditorExportPlugin
+var export_plugin: EditorExportPlugin
 var sprite_inspector_plugin: EditorInspectorPlugin
 var animated_sprite_inspector_plugin: EditorInspectorPlugin
 
@@ -46,10 +47,8 @@ func _enter_tree():
 	_setup_animated_sprite_inspector_plugin()
 	_setup_sprite_inspector_plugin()
 
-
 func _exit_tree():
 	_disable_plugin()
-
 
 func _disable_plugin():
 	_remove_menu_entries()
@@ -59,10 +58,8 @@ func _disable_plugin():
 	_remove_inspector_plugins()
 	config.clear_project_settings()
 
-
 func _load_config():
 	config.initialize_project_settings()
-
 
 func _setup_menu_entries():
 	var submenu = PopupMenu.new()
@@ -72,10 +69,8 @@ func _setup_menu_entries():
 	submenu.add_item(config_menu_item_name)
 	submenu.index_pressed.connect(_on_tool_menu_pressed)
 
-
 func _remove_menu_entries():
 	remove_tool_menu_item(tool_menu_name)
-
 
 func _setup_importer():
 	_importers = [
@@ -83,16 +78,15 @@ func _setup_importer():
 		SpriteFramesImportPlugin.new(),
 		TilesetTextureImportPlugin.new(),
 		TextureImportPlugin.new(),
+		TextureTagsImportPlugin.new()
 	]
 
 	for i in _importers:
 		add_import_plugin(i)
 
-
 func _remove_importer():
 	for i in _importers:
 		remove_import_plugin(i)
-
 
 func _setup_exporter():
 	if config.is_exporter_enabled():
@@ -100,27 +94,22 @@ func _setup_exporter():
 		add_export_plugin(export_plugin)
 		_exporter_enabled = true
 
-
 func _remove_exporter():
 	if _exporter_enabled:
 		remove_export_plugin(export_plugin)
 		_exporter_enabled = false
 
-
 func _setup_sprite_inspector_plugin():
 	sprite_inspector_plugin = SpriteInspectorPlugin.new()
 	add_inspector_plugin(sprite_inspector_plugin)
-
 
 func _setup_animated_sprite_inspector_plugin():
 	animated_sprite_inspector_plugin = AnimatedSpriteInspectorPlugin.new()
 	add_inspector_plugin(animated_sprite_inspector_plugin)
 
-
 func _remove_inspector_plugins():
 	remove_inspector_plugin(sprite_inspector_plugin)
 	remove_inspector_plugin(animated_sprite_inspector_plugin)
-
 
 func _remove_wizard_dock():
 	if window:
@@ -128,17 +117,15 @@ func _remove_wizard_dock():
 		window.queue_free()
 		window = null
 
-
 func _open_window():
 	if window:
 		make_bottom_panel_item_visible(window)
 		return
 
 	window = WizardWindow.instantiate()
-	window.connect("close_requested",Callable(self,"_on_window_closed"))
+	window.connect("close_requested", Callable(self, "_on_window_closed"))
 	add_control_to_bottom_panel(window, "Aseprite Wizard")
 	make_bottom_panel_item_visible(window)
-
 
 func _open_config_dialog():
 	if is_instance_valid(config_window):
@@ -147,7 +134,6 @@ func _open_config_dialog():
 	config_window = ConfigDialog.instantiate()
 	get_editor_interface().get_base_control().add_child(config_window)
 	config_window.popup_centered()
-
 
 func _open_import_list_dialog():
 	if is_instance_valid(imports_list_window):
@@ -164,13 +150,11 @@ func _open_import_list_dialog():
 	imports_list_panel.dock_requested.connect(_on_import_list_dock_requested)
 	_create_imports_manager_window(imports_list_panel)
 
-
 func _on_window_closed():
 	if window:
 		remove_control_from_bottom_panel(window)
 		window.queue_free()
 		window = null
-
 
 func _on_tool_menu_pressed(index):
 	match index:
@@ -180,7 +164,6 @@ func _on_tool_menu_pressed(index):
 			_open_import_list_dialog()
 		2: # config
 			_open_config_dialog()
-
 
 func _on_import_list_dock_requested():
 	if _is_import_list_docked:
@@ -200,7 +183,6 @@ func _on_import_list_dock_requested():
 	imports_list_window.queue_free()
 	add_control_to_bottom_panel(imports_list_panel, "Aseprite Imports Manager")
 	make_bottom_panel_item_visible(imports_list_panel)
-
 
 func _create_imports_manager_window(panel: MarginContainer):
 	imports_list_window = AsepriteDockImportsWindow.instantiate()

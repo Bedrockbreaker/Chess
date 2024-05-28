@@ -1,0 +1,16 @@
+[remap]
+
+importer="aseprite_wizard.plugin.texture-tags"
+type="AtlasTexture"
+uid="uid://udigegx61n17"
+path="res://.godot/imported/xianqi.aseprite-37c45786fd2d44c14bbac594ff5a961a.res"
+
+[deps]
+
+source_file="res://resources/piece/xianqi/xianqi.aseprite"
+dest_files=["res://.godot/imported/xianqi.aseprite-37c45786fd2d44c14bbac594ff5a961a.res"]
+
+[params]
+
+exclude_layers_pattern=""
+only_visible_layers=false

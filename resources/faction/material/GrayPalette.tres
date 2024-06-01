@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://d14brcmdcywu4"]
+
+[ext_resource type="Shader" path="res://resources/faction/material/PaletteSwap.gdshader" id="1_wnrve"]
+
+[resource]
+shader = ExtResource("1_wnrve")
+shader_parameter/highlight = Color(0.784314, 0.768627, 0.733333, 1)
+shader_parameter/bright = Color(0.662745, 0.682353, 0.701961, 1)
+shader_parameter/midtone = Color(0.511093, 0.524921, 0.566406, 1)
+shader_parameter/shade = Color(0.39, 0.3731, 0.351, 1)
+shader_parameter/dark = Color(0.3, 0.297, 0.294, 1)

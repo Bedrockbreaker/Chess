@@ -6,3 +6,7 @@
 script = ExtResource("1_ha38x")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+use_parent_material = true
+
+[node name="ColorblindIcon" type="Sprite2D" parent="."]
+use_parent_material = true

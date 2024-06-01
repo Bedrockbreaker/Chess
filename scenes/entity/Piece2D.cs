@@ -12,15 +12,20 @@ public partial class Piece2D : Node2D {
 		get => piece;
 		set {
 			piece = value;
-			sprite.Texture = ResourceLoader.Load<Texture2D>($"res://resources/piece/{game.GetNamespace(piece).PluginId}/{game.GetNamespace(piece).Path}.png");
+			Material = piece.Faction.GetMaterial();
+			sprite.Texture = game.GetTexture2D(piece);
+			ColorblindIcon.Texture = piece.Faction.GetIcon();
 		}
 	}
 
 	public Sprite2D sprite;
 
+	public Sprite2D ColorblindIcon { get; set; }
+
 	private IPiece piece;
 
 	public override void _Ready() {
 		sprite = GetNode<Sprite2D>("Sprite2D");
+		ColorblindIcon = GetNode<Sprite2D>("ColorblindIcon");
 	}
 }

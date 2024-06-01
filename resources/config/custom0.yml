@@ -1,0 +1,286 @@
+name: 16 Faction Setup
+description: Standard chess setup, but with 16 player factions
+config-version: 1
+
+board:
+  - [a, b, c, d, e, f, g, h]
+  - [i, j, k, l, m, n, o, p]
+  - [., ., ., ., ., ., ., .]
+  - [., ., ., ., ., ., ., .]
+  - [., ., ., ., ., ., ., .]
+  - [., ., ., ., ., ., ., .]
+  - [q, r, s, t, u, v, w, x]
+  - [y, z, A, B, C, D, E, F]
+
+board-key:
+  a:
+    piece:
+      namespace: orthodox:rook
+      faction: 0
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  b:
+    piece:
+      namespace: orthodox:knight
+      faction: 1
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  c:
+    piece:
+      namespace: orthodox:bishop
+      faction: 2
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  d:
+    piece:
+      namespace: orthodox:queen
+      faction: 3
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  e:
+    piece:
+      namespace: orthodox:king
+      faction: 4
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  f:
+    piece:
+      namespace: orthodox:bishop
+      faction: 5
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  g:
+    piece:
+      namespace: orthodox:knight
+      faction: 6
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  h:
+    piece:
+      namespace: orthodox:rook
+      faction: 7
+      forwards: down
+    tile-components:
+      - pawn-promotion
+  i:
+    piece:
+      namespace: orthodox:pawn
+      faction: 0
+      forwards: down
+  j:
+    piece:
+      namespace: orthodox:pawn
+      faction: 1
+      forwards: down
+  k:
+    piece:
+      namespace: orthodox:pawn
+      faction: 2
+      forwards: down
+  l:
+    piece:
+      namespace: orthodox:pawn
+      faction: 3
+      forwards: down
+  m:
+    piece:
+      namespace: orthodox:pawn
+      faction: 4
+      forwards: down
+  n:
+    piece:
+      namespace: orthodox:pawn
+      faction: 5
+      forwards: down
+  o:
+    piece:
+      namespace: orthodox:pawn
+      faction: 6
+      forwards: down
+  p:
+    piece:
+      namespace: orthodox:pawn
+      faction: 7
+      forwards: down
+  q:
+    piece:
+      namespace: orthodox:pawn
+      faction: 8
+      forwards: up
+  r:
+    piece:
+      namespace: orthodox:pawn
+      faction: 9
+      forwards: up
+  s:
+    piece:
+      namespace: orthodox:pawn
+      faction: 10
+      forwards: up
+  t:
+    piece:
+      namespace: orthodox:pawn
+      faction: 11
+      forwards: up
+  u:
+    piece:
+      namespace: orthodox:pawn
+      faction: 12
+      forwards: up
+  v:
+    piece:
+      namespace: orthodox:pawn
+      faction: 13
+      forwards: up
+  w:
+    piece:
+      namespace: orthodox:pawn
+      faction: 14
+      forwards: up
+  x:
+    piece:
+      namespace: orthodox:pawn
+      faction: 15
+      forwards: up
+  y:
+    piece:
+      namespace: orthodox:rook
+      faction: 8
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  z:
+    piece:
+      namespace: orthodox:knight
+      faction: 9
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  A:
+    piece:
+      namespace: orthodox:bishop
+      faction: 10
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  B:
+    piece:
+      namespace: orthodox:queen
+      faction: 11
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  C:
+    piece:
+      namespace: orthodox:king
+      faction: 12
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  D:
+    piece:
+      namespace: orthodox:bishop
+      faction: 13
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  E:
+    piece:
+      namespace: orthodox:knight
+      faction: 14
+      forwards: up
+    tile-components:
+      - pawn-promotion
+  F:
+    piece:
+      namespace: orthodox:rook
+      faction: 15
+      forwards: up
+    tile-components:
+      - pawn-promotion
+
+factions:
+  - id: 0
+    name: White
+    color: white
+    icon: circle
+  - id: 1
+    name: Black
+    color: black
+    icon: square
+  - id: 2
+    name: Red
+    color: red
+    icon: triangle
+  - id: 3
+    name: Green
+    color: green
+    icon: spade
+  - id: 4
+    name: Blue
+    color: blue
+    icon: diamond
+  - id: 5
+    name: Yellow
+    color: yellow
+    icon: heart
+  - id: 6
+    name: Purple
+    color: purple
+    icon: club
+  - id: 7
+    name: Orange
+    color: orange
+    icon: star
+  - id: 8
+    name: Pink
+    color: pink
+    icon: cross
+  - id: 9
+    name: Mint
+    color: mint
+    icon: plus
+  - id: 10
+    name: Cyan
+    color: cyan
+    icon: crescent
+  - id: 11
+    name: Brown
+    color: brown
+    icon: spiral
+  - id: 12
+    name: Gray
+    color: gray
+    icon: bolt
+  - id: 13
+    name: Magenta
+    color: magenta
+    icon: pentagon
+  - id: 14
+    name: Olive
+    color: olive
+    icon: hexagon
+  - id: 15
+    name: Coral
+    color: coral
+    icon: arrow
+
+end-conditions:
+  extinction-royalty: false
+  max-royalty-in-check: 1
+  rex-multiplex: false
+  max-boring-turns: [50, 75]
+  max-turn-repetitions: [3, 5]
+  turn-repetition-is-loss: false
+
+plugins:
+  - orthodox
+
+moves: []

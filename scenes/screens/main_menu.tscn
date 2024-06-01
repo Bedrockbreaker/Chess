@@ -76,6 +76,8 @@ grow_vertical = 2
 [node name="Play" type="Button" parent="VBoxContainer/Control2/VBoxContainer"]
 layout_mode = 2
 text = "screen.mainmenu.button.play"
+script = ExtResource("2_nrpq1")
+path = "res://scenes/entity/Board.tscn"
 
 [node name="Faepedia" type="Button" parent="VBoxContainer/Control2/VBoxContainer"]
 layout_mode = 2

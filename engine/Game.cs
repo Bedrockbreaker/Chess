@@ -62,6 +62,13 @@ public class Game {
 						}
 
 						piece.Value = PieceFactory[namespaceId]();
+						Faction faction = config.Factions.Find(faction => faction.Id == boardKey.PieceDescription.FactionId);
+						if (faction == default) {
+							GD.PushWarning($"Error parsing config {config.Name}: Unknown faction {boardKey.PieceDescription.FactionId}");
+							continue;
+						}
+						piece.Value.Faction = faction;
+
 						// TODO: set piece properties
 					}
 				}
@@ -75,6 +82,11 @@ public class Game {
 
 	public Namespace GetNamespace(IPiece piece) {
 		return PieceRegistry[piece.GetType()];
+	}
+
+	public Texture2D GetTexture2D(IPiece piece) {
+		Namespace namespaceId = GetNamespace(piece);
+		return ResourceLoader.Load<Texture2D>($"res://resources/piece/{namespaceId.PluginId}/{namespaceId.Path}.png");
 	}
 
 	private void PushState(GameState state) {

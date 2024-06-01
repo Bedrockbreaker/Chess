@@ -39,6 +39,17 @@ project/assembly_name="Yggdrasil"
 
 enabled=PackedStringArray("res://addons/AsepriteWizard/plugin.cfg", "res://addons/Asset_Drawer/plugin.cfg", "res://addons/lang_importer/plugin.cfg")
 
+[file_customization]
+
+folder_colors={
+"res://addons/": "gray",
+"res://debug/": "red",
+"res://engine/": "blue",
+"res://resources/": "teal",
+"res://scenes/": "purple",
+"res://server/": "pink"
+}
+
 [filesystem]
 
 import/blender/enabled=false

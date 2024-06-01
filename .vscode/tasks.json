@@ -23,7 +23,10 @@
 				"-e",
 				"${workspaceFolder}"
 			],
-			"problemMatcher": []
+			"problemMatcher": [],
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
 		},
 		{
 			"label": "Type-check Server",

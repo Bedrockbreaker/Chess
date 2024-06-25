@@ -1,8 +1,10 @@
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// A tile on the board
-/// </summary>
+/**
+ * <summary>
+ * A tile on the board
+ * </summary>
+ */
 public struct Tile {
 
 	public Pos Pos;

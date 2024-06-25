@@ -2,9 +2,11 @@ using System;
 
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// A 2D position
-/// </summary>
+/**
+ * <summary>
+ * A 2D position
+ * </summary>
+ */
 public struct Pos {
 	public int x;
 	public int y;

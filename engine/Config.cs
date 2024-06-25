@@ -9,9 +9,11 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// Deserialized config file
-/// </summary>
+/**
+ * <summary>
+ * Deserialized config file
+ * </summary>
+ */
 public struct Config {
 
 	public string Name { get; set; }

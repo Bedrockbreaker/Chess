@@ -1,8 +1,10 @@
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// An entire board of tiles and pieces
-/// </summary>
+/**
+ * <summary>
+ * An entire board of tiles and pieces
+ * </summary>
+ */
 public struct Board {
 
 	public int Width { get; set; }

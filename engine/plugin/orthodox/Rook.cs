@@ -2,11 +2,13 @@ using System.Collections.Generic;
 
 namespace Yggdrasil.Engine.Plugin.Orthodox;
 
-/// <summary>
-/// Standard chess rook.
-/// <para/>
-/// 
-/// </summary>
+/**
+ * <summary>
+ * Standard chess rook.
+ * <para/>
+ * 
+ * </summary>
+ */
 [YggdrasilPiece("orthodox", "rook")]
 public class Rook : Piece {
 

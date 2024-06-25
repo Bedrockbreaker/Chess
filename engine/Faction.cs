@@ -5,14 +5,16 @@ using Godot;
 
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// A faction which pieces are affiliated with.
-/// <para/>
-/// Factions are used to determine which pieces can attack each other,
-/// their color tint and color-blind friendly icon,
-/// which direction the board is facing on their client,
-/// and the time controls that faction is under.
-/// </summary>
+/**
+ * <summary>
+ * A faction which pieces are affiliated with.
+ * <para/>
+ * Factions are used to determine which pieces can attack each other,
+ * their color tint and color-blind friendly icon,
+ * which direction the board is facing on their client,
+ * and the time controls that faction is under.
+ * </summary>
+ */
 public struct Faction {
 
 	private static readonly Dictionary<Colors, ShaderMaterial> materials = new() {

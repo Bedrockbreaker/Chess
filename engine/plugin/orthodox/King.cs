@@ -2,11 +2,13 @@ using System.Collections.Generic;
 
 namespace Yggdrasil.Engine.Plugin.Orthodox;
 
-/// <summary>
-/// Standard chess king.
-/// <para/>
-/// 
-/// </summary>
+/**
+ * <summary>
+ * Standard chess king.
+ * <para/>
+ * 
+ * </summary>
+ */
 [YggdrasilPiece("orthodox", "king")]
 public class King : Piece {
 

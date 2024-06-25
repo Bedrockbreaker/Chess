@@ -2,9 +2,11 @@ using System.Collections.Generic;
 
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// A generic piece to extend from
-/// </summary>
+/**
+ * <summary>
+ * A generic piece to extend from
+ * </summary>
+ */
 public class Piece : IPiece {
 
 	public static readonly Namespace Namespace;

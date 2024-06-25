@@ -2,9 +2,11 @@ using System.Collections.Generic;
 
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// Time contrstraints for a faction
-/// </summary>
+/**
+ * <summary>
+ * Time constraints for a faction
+ * </summary>
+ */
 public struct TimeControls {
 
 	public uint Main { get; set; }

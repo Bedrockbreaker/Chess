@@ -2,9 +2,11 @@ using System.Collections.Generic;
 
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// A game piece, whether on the board or in the hand
-/// </summary>
+/**
+ * <summary>
+ * A game piece, whether on the board or in the hand
+ * </summary>
+ */
 public interface IPiece {
 
 	public Board Board { get; set; }

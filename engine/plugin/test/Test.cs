@@ -1,8 +1,10 @@
 namespace Yggdrasil.Engine.Plugin.Test;
 
-/// <summary>
-/// A test piece
-/// </summary>
+/**
+ * <summary>
+ * A test piece
+ * </summary>
+ */
 [YggdrasilPiece("test", "test")]
 public class Test : Piece {
 

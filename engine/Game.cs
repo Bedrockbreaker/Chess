@@ -7,9 +7,11 @@ using Godot;
 
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// Fantasy chess engine FTW
-/// </summary>
+/**
+ * <summary>
+ * Fantasy chess engine FTW
+ * </summary>
+ */
 public class Game {
 
 	public GameState State { get => History.Peek(); }

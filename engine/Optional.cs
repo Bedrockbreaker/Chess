@@ -2,9 +2,11 @@ using System.Diagnostics;
 
 namespace Yggdrasil.Engine;
 
-/// <summary>
-/// An optional value
-/// </summary>
+/**
+ * <summary>
+ * An optional value
+ * </summary>
+ */
 public struct Optional<T> {
 
 	private T value;

@@ -62,6 +62,9 @@ public class Game {
 						}
 
 						piece.Value = PieceFactory[namespaceId]();
+						piece.Value.Board = board;
+						piece.Value.Pos = new Pos(x, y);
+						piece.Value.Forwards = boardKey.PieceDescription.Forwards;
 						Faction faction = config.Factions.Find(faction => faction.Id == boardKey.PieceDescription.FactionId);
 						if (faction == default) {
 							GD.PushWarning($"Error parsing config {config.Name}: Unknown faction {boardKey.PieceDescription.FactionId}");

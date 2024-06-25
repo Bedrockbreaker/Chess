@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Yggdrasil.Engine.Plugin.Orthodox;
 
 /// <summary>
-/// Standard chess pawn.
+/// Standard chess rook.
 /// <para/>
 /// 
 /// </summary>
@@ -14,10 +14,10 @@ public class Rook : Piece {
 		Nickname = "Rook";
 	}
 
-	public Rook(Pos pos, string nickname, Faction faction, Cardinal forwards, bool isRoyal, bool isIron, bool hasMoved) : base(pos, nickname, faction, forwards, isRoyal, isIron, hasMoved) { }
+	public Rook(Board board, Pos pos, string nickname, Faction faction, Cardinal forwards, bool isRoyal, bool isIron, bool hasMoved) : base(board, pos, nickname, faction, forwards, isRoyal, isIron, hasMoved) { }
 
-	public override List<Action> GetActions() {
-		List<Action> actions = new();
+	public override List<List<Action>> GetActions() {
+		List<List<Action>> actions = new();
 
 		return actions;
 	}

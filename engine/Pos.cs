@@ -42,6 +42,16 @@ public struct Pos {
 		this.y = y;
 	}
 
+	public readonly Pos Rotate(Cardinal cardinal) {
+		return cardinal switch {
+			Cardinal.UP => new Pos(x, -y),
+			Cardinal.RIGHT => new Pos(-y, -x),
+			Cardinal.DOWN => new Pos(-x, y),
+			Cardinal.LEFT => new Pos(y, x),
+			_ => this
+		};
+	}
+
 	public readonly Pos RotateCW(int numQuarters) {
 		return (numQuarters % 4) switch {
 			0 => this,

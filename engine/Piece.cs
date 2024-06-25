@@ -9,6 +9,7 @@ public class Piece : IPiece {
 
 	public static readonly Namespace Namespace;
 
+	public Board Board { get; set; }
 	public Pos Pos { get; set; }
 	public string Nickname { get; set; }
 	public Faction Faction { get; set; }
@@ -23,7 +24,8 @@ public class Piece : IPiece {
 
 	public Piece() { }
 
-	public Piece(Pos? pos, string nickname, Faction? faction, Cardinal? forwards, bool? isRoyal, bool? isIron, bool? hasMoved) {
+	public Piece(Board board, Pos? pos, string nickname, Faction? faction, Cardinal? forwards, bool? isRoyal, bool? isIron, bool? hasMoved) {
+		Board = board;
 		Pos = pos ?? default;
 		Nickname = nickname;
 		Faction = faction ?? default;
@@ -34,18 +36,30 @@ public class Piece : IPiece {
 	}
 
 	public virtual IPiece Copy() {
-		return new Piece(Pos, Nickname, Faction, Forwards, IsRoyal, IsIron, HasMoved);
+		return new Piece(Board, Pos, Nickname, Faction, Forwards, IsRoyal, IsIron, HasMoved);
 	}
 
-	public virtual List<Action> GetActions() {
-		return new List<Action>();
+	public virtual List<List<Action>> GetActions() {
+		return new List<List<Action>>();
 	}
 
-	public virtual Optional<Tile> GetRelativeTile(Pos relativePos) {
-		throw new System.NotImplementedException();
+	public virtual Optional<Tile> GetRelativeTile(Pos offset) {
+		return Board.GetTile(Pos + offset.Rotate(Forwards));
+	}
+
+	public virtual bool IsFriendly(IPiece other) {
+		return Faction == other.Faction;
+	}
+
+	public virtual bool IsCapturable() {
+		return !IsIron;
 	}
 
 	public virtual bool IsCapturableBy(IPiece other) {
-		return !IsIron && Faction != other.Faction;
+		return IsCapturable() && !IsFriendly(other);
+	}
+
+	public override string ToString() {
+		return $"Piece({Nickname})";
 	}
 }

@@ -14,10 +14,10 @@ public class King : Piece {
 		Nickname = "King";
 	}
 
-	public King(Pos pos, string nickname, Faction faction, Cardinal forwards, bool isRoyal, bool isIron, bool hasMoved) : base(pos, nickname, faction, forwards, isRoyal, isIron, hasMoved) { }
+	public King(Board board, Pos pos, string nickname, Faction faction, Cardinal forwards, bool isRoyal, bool isIron, bool hasMoved) : base(board, pos, nickname, faction, forwards, isRoyal, isIron, hasMoved) { }
 
-	public override List<Action> GetActions() {
-		List<Action> actions = new();
+	public override List<List<Action>> GetActions() {
+		List<List<Action>> actions = new();
 
 		return actions;
 	}

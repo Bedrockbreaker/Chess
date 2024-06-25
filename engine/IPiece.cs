@@ -7,6 +7,7 @@ namespace Yggdrasil.Engine;
 /// </summary>
 public interface IPiece {
 
+	public Board Board { get; set; }
 	public Pos Pos { get; set; }
 	public string Nickname { get; set; }
 	public Faction Faction { get; set; }
@@ -22,9 +23,13 @@ public interface IPiece {
 
 	public IPiece Copy();
 
-	public List<Action> GetActions();
+	public List<List<Action>> GetActions();
+
+	public bool IsFriendly(IPiece other);
+
+	public bool IsCapturable();
 
 	public bool IsCapturableBy(IPiece other);
 
-	public Optional<Tile> GetRelativeTile(Pos relativePos);
+	public Optional<Tile> GetRelativeTile(Pos offset);
 }

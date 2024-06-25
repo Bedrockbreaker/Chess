@@ -74,4 +74,8 @@ public struct Pos {
 	public readonly override int GetHashCode() {
 		return HashCode.Combine(x, y);
 	}
+
+	public readonly override string ToString() {
+		return $"Pos({x}, {y})";
+	}
 }

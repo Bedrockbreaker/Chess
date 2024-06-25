@@ -62,4 +62,8 @@ public struct Optional<T> {
 		hasValue = false;
 		value = default;
 	}
+
+	public readonly override string ToString() {
+		return hasValue ? $"Optional<{value}>" : "Optional<null>";
+	}
 }

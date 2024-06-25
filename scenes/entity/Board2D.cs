@@ -1,4 +1,8 @@
+using System.Linq;
+
 using Godot;
+
+using Nakama.TinyJson;
 
 using Yggdrasil.Client.Entity.Piece;
 using Yggdrasil.Engine;
@@ -28,5 +32,9 @@ public partial class Board2D : Node2D {
 				piece2d.Piece = piece.Value;
 			}
 		}
+
+		IPiece test = board.GetTile(new Pos(0, 1)).Value.Piece.Value;
+		GD.Print(game.GetNamespace(test));
+		GD.Print(test.GetActions().Select(actionList => actionList.Select(action => action.ToString()).ToList()).ToList().ToJson());
 	}
 }

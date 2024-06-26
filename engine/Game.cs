@@ -63,18 +63,21 @@ public class Game {
 							continue;
 						}
 
-						piece.Value = PieceFactory[namespaceId]();
-						piece.Value.Board = board;
-						piece.Value.Pos = new Pos(x, y);
-						piece.Value.Forwards = boardKey.PieceDescription.Forwards;
+						IPiece Piece = PieceFactory[namespaceId]();
+
+						Piece.Board = board;
+						Piece.Pos = new Pos(x, y);
+						Piece.Forwards = boardKey.PieceDescription.Forwards;
 						Faction faction = config.Factions.Find(faction => faction.Id == boardKey.PieceDescription.FactionId);
 						if (faction == default) {
 							GD.PushWarning($"Error parsing config {config.Name}: Unknown faction {boardKey.PieceDescription.FactionId}");
 							continue;
 						}
-						piece.Value.Faction = faction;
+						Piece.Faction = faction;
 
-						// TODO: set piece properties
+						piece.Value = Piece;
+
+						// TODO: set additional piece properties
 					}
 				}
 				board[x, y] = new Tile(new Pos(x, y), piece);

@@ -59,7 +59,7 @@ public class ActionBuilder {
  */
 public class ActionAtom {
 
-	public HashSet<ActionModalities> Modalities = new();
+	public HashSet<ActionModalities> Modalities = new() { ActionModalities.MOVE, ActionModalities.CAPTURE };
 
 	private IPiece Piece;
 	private int X;

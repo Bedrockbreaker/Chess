@@ -165,7 +165,10 @@ public class ActionAtom {
 			for (int j = explorationSet.Count - 1; j >= 0; j--) {
 				// TODO: factor in rotation
 				Optional<Tile> optionalTile = Piece.GetRelativeTile(explorationSet[j].Pos);
-				if (!optionalTile.HasValue) continue;
+				if (!optionalTile.HasValue) {
+					exploration.RemoveAt(j);
+					continue;
+				}
 				Tile tile = optionalTile.Value;
 
 				// TODO: check if this piece is royal, and stop exploration if tile is under attack

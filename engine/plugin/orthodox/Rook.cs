@@ -6,7 +6,7 @@ namespace Yggdrasil.Engine.Plugin.Orthodox;
  * <summary>
  * Standard chess rook.
  * <para/>
- * 
+ * W0
  * </summary>
  */
 [YggdrasilPiece("orthodox", "rook")]
@@ -20,6 +20,11 @@ public class Rook : Piece {
 
 	public override List<List<Action>> GetActions() {
 		List<List<Action>> actions = new();
+
+		// Rook can move indefinitely othogonally
+		ActionBuilder builder = new(this);
+		builder.AddAtom(1, 0).SetRange(0);
+		actions.AddRange(builder.Build());
 
 		return actions;
 	}

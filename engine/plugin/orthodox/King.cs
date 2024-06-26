@@ -6,7 +6,8 @@ namespace Yggdrasil.Engine.Plugin.Orthodox;
  * <summary>
  * Standard chess king.
  * <para/>
- * 
+ * (F1)(W1)<br/>
+ * + Castling
  * </summary>
  */
 [YggdrasilPiece("orthodox", "king")]
@@ -20,6 +21,16 @@ public class King : Piece {
 
 	public override List<List<Action>> GetActions() {
 		List<List<Action>> actions = new();
+
+		// King can move once othogonally or diagonally
+		ActionBuilder builder = new(this);
+		builder.AddAtom(1, 0);
+		actions.AddRange(builder.Build());
+
+		builder.AddAtom(1, 1);
+		actions.AddRange(builder.Build());
+
+		// TODO: Castling
 
 		return actions;
 	}

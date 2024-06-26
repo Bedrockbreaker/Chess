@@ -6,7 +6,7 @@ namespace Yggdrasil.Engine.Plugin.Orthodox;
  * <summary>
  * Standard chess knight.
  * <para/>
- * 
+ * N1
  * </summary>
  */
 [YggdrasilPiece("orthodox", "knight")]
@@ -20,6 +20,11 @@ public class Knight : Piece {
 
 	public override List<List<Action>> GetActions() {
 		List<List<Action>> actions = new();
+
+		// Knight moves in an L shape.
+		ActionBuilder builder = new(this);
+		builder.AddAtom(2, 1);
+		actions.AddRange(builder.Build());
 
 		return actions;
 	}
